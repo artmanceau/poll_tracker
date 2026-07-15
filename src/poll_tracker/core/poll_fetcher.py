@@ -239,17 +239,16 @@ class PollFetcher:
 
     @staticmethod
     def adjust_blocs(df: pl.DataFrame, blocs: list[str]) -> pl.DataFrame:
-        row_sums_expr = pl.sum_horizontal([f"{b}_raw" for b in blocs])
+        row_sums_expr = pl.sum_horizontal([f"BR_{b}" for b in blocs])
         delta = df.select(
             ((100 - row_sums_expr) / len(blocs)).alias("delta")
         ).get_column("delta")
         return df.with_columns([
-            (pl.col(f"{b}_raw") + pl.lit(delta)).alias(b)
+            (pl.col(f"BR_{b}") + pl.lit(delta)).alias(f'BP_{b}')
             for b in blocs
         ])
 
     def _add_political_trend(self, X, year, blocs):
-        logger.debug("Adding political groups...")
         bloc = blocs[year]
         X = X.with_columns(
                 all_scores_candidates_sum=pl.sum_horizontal(
@@ -259,17 +258,17 @@ class PollFetcher:
                 pl.sum_horizontal([
                     pl.col(f"C_{candidate}_processed")
                     for candidate in candidates
-                ]).alias(f"{b}_raw")
+                ]).alias(f"BR_{b}")
                 for b, candidates in bloc.items()
             ]).with_columns(
-                GCG_raw=(pl.col("G_raw") + pl.col("CG_raw")).round(2),
-                DCD_raw=(pl.col("D_raw") + pl.col("CD_raw")).round(2),
-                CGCCD=(pl.col("CG_raw") + pl.col("C_raw") + pl.col("CD_raw")).round(2),
-                TG_raw=(pl.col("G_raw") + pl.col("CG_raw") + pl.col("C_raw") / 2).round(2),
-                TD_raw=(pl.col("D_raw") + pl.col("CD_raw") + pl.col("C_raw") / 2).round(2),
+                BR_GCG=(pl.col("BR_G") + pl.col("BR_CG")).round(2),
+                BR_DCD=(pl.col("BR_D") + pl.col("BR_CD")).round(2),
+                BR_CGCCD=(pl.col("BR_CG") + pl.col("BR_C") + pl.col("BR_CD")).round(2),
+                BR_TG=(pl.col("BR_G") + pl.col("BR_CG") + pl.col("BR_C") / 2).round(2),
+                BR_TD=(pl.col("BR_D") + pl.col("BR_CD") + pl.col("BR_C") / 2).round(2),
             ).with_columns(
                 all_scores_bloc_sum=pl.sum_horizontal(
-                    [pl.col(f'{b}_raw') for b in bloc.keys()]
+                    [pl.col(f'BR_{b}') for b in bloc.keys()]
                 )
             ).with_columns(
                 missing=100 - pl.col('all_scores_bloc_sum')
@@ -277,7 +276,7 @@ class PollFetcher:
 
         for blocs_levels in [blocs_level_1, blocs_level_2, blocs_level_3]:
             mean = X.select(
-                pl.sum_horizontal([f"{b}_raw" for b in blocs_levels]).mean()
+                pl.sum_horizontal([f"BR_{b}" for b in blocs_levels]).mean()
             ).item()
             assert 50 < mean < 100, f"mean {mean} not in (50, 100)"
 
@@ -287,16 +286,16 @@ class PollFetcher:
 
         # Derived adjusted columns
         X = X.with_columns(
-            GCG=(pl.col("G") + pl.col("CG")).round(2),
-            DCD=(pl.col("D") + pl.col("CD")).round(2),
-            CGCCD=(pl.col("CG") + pl.col("C") + pl.col("CD")).round(2),
-            TG=(pl.col("G") + pl.col("CG") + pl.col("C") / 2).round(2),
-            TD=(pl.col("D") + pl.col("CD") + pl.col("C") / 2).round(2),
+            BP_GCG=(pl.col("BP_G") + pl.col("BP_CG")).round(2),
+            BP_DCD=(pl.col("BP_D") + pl.col("BP_CD")).round(2),
+            BP_CGCCD=(pl.col("BP_CG") + pl.col("BP_C") + pl.col("BP_CD")).round(2),
+            BP_TG=(pl.col("BP_G") + pl.col("BP_CG") + pl.col("BP_C") / 2).round(2),
+            BP_TD=(pl.col("BP_D") + pl.col("BP_CD") + pl.col("BP_C") / 2).round(2),
         )
         # Final assertions
         for blocs in [blocs_level_1, blocs_level_2, blocs_level_3]:
             mean = X.select(
-                pl.sum_horizontal([f"{b}" for b in blocs]).mean()
+                pl.sum_horizontal([f"BP_{b}" for b in blocs]).mean()
             ).item()
             assert np.isclose(mean, 100), f"mean {mean} not close to 100"
 
@@ -373,25 +372,55 @@ class PollFetcher:
         X = self._parse_results(X)
         return X
 
+    def add_error(self, X):
+        # 1. Select all cols starting with C_, BR_, BP_
+        score_cols = (
+            cs.starts_with("BR_", "BP_")
+            | (cs.starts_with("C_") & cs.ends_with("_processed"))
+        )
+
+        # 2. Extract the results row as a reference Series per column
+        results_row = (
+            X
+            .filter(pl.col('source') == 'Résultats')
+            .select(score_cols)
+        )
+
+        # 3. Compute error columns (difference with results row) for each matching col
+        matching_cols = X.select(score_cols).columns
+
+        X = X.with_columns([
+            (pl.col(c) - pl.lit(results_row.get_column(c)[0])).alias(f"E_{c}")
+            for c in matching_cols
+        ])
+        return X
+
     def fetch_polls(self, year):
         """Method to get polling data for a given year"""
         logger.info(f"Getting poll data for year: {year}")
 
         # Fetch all tables from page
+        logger.debug('Fetching from wikipedia')
         wikipedia_page_url = links[year]
         tables, soup_tables = self.fetch_page(wikipedia_page_url)
         table_dict = self.parse_page(tables, soup_tables)
 
         # Instantiate the datasets
+        logger.debug('Concat all tables')
         poll_dataset_t1, poll_dataset_t2 = (
             self.concat_tour(year, table_dict,  "tour 1"),
             self.concat_tour(year, table_dict,  "tour 2"),
         )
 
+        logger.debug('Reformatting')
         poll_dataset_t1 = self.formate(poll_dataset_t1)
         poll_dataset_t2 = self.formate(poll_dataset_t2)
 
+        logger.debug("Adding political groups...")
         poll_dataset_t1 = self._add_political_trend(poll_dataset_t1, year, blocs=blocs)
+
+        poll_dataset_t1 = self.add_error(poll_dataset_t1)
+        poll_dataset_t2 = self.add_error(poll_dataset_t2)
 
         return {'t1': poll_dataset_t1, 't2': poll_dataset_t2}
 
@@ -399,4 +428,12 @@ class PollFetcher:
         election_type = "presidentiel"
         logger.debug("Saving to S3")
         for tour in ['t1', 't2']:
-            datasets[tour].write_parquet(data_path + f"{election_type}/{year}/{tour}/polls.parquet")
+            datasets[tour].write_parquet(data_path + f"{election_type}/{year}/{tour}/polls.parquet",
+            storage_options={
+                "aws_endpoint_url": "https://minio.lab.sspcloud.fr",
+                "aws_region": "us-east-1",
+            },
+            credential_provider=pl.CredentialProviderAWS(
+                profile_name="default",
+                region_name="us-east-1",
+            ))
