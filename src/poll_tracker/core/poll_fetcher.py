@@ -11,7 +11,6 @@ from bs4 import BeautifulSoup
 from loguru import logger
 from poll_tracker.assets.candidates import candidate_map, alias_to_id
 from poll_tracker.assets.polling_institute import INSTITUTE_LOOKUP
-
 import polars.selectors as cs
 from poll_tracker.utils.data_loader import DataLoader, DataUtils
 
@@ -20,6 +19,86 @@ from poll_tracker.assets.candidates import *
 from poll_tracker.assets.date_utils import FRENCH_MONTHS
 from poll_tracker.assets.scrapping_asset import table_selector, links
 from poll_tracker.core.fetcher_utils import FetcherUtils
+
+
+
+MONTHS = {
+    "janvier": "01",
+    "février": "02",
+    "mars": "03",
+    "avril": "04",
+    "mai": "05",
+    "juin": "06",
+    "juillet": "07",
+    "août": "08",
+    "septembre": "09",
+    "octobre": "10",
+    "novembre": "11",
+    "décembre": "12",
+}
+
+MONTH_EXPR = pl.col("month").replace(MONTHS)
+MONTH2_EXPR = pl.col("month2").replace(MONTHS)
+
+
+def parse_period(expr: pl.Expr, year: int | pl.Expr, title:pl.Expr):
+    expr = (
+        expr.str.to_lowercase()
+        .str.replace_all("1er", "1")
+        .str.replace_all(r"\s*-\s*", "-")
+        .str.replace_all(r"\s+", " ")
+        .str.strip_chars()
+    )
+
+    pattern = (
+        r"^(?P<day1>\d{1,2})"
+        r"(?:-(?P<day2>\d{1,2}))?"
+        r"\s+(?P<month>[[:alpha:]éûôàî]+)"
+        r"(?:-(?P<day3>\d{1,2})\s+(?P<month2>[[:alpha:]éûôàî]+))?"
+        r"(?:\s+(?P<year>\d{4}))?$"
+    )
+
+    parts = expr.str.extract_groups(pattern)
+
+    year_from_title = (
+        title.str.extract(r"(\d{4})", group_index=1)
+        if title is not None
+        else pl.lit(None, dtype=pl.String)
+    )
+
+    year_expr = (
+        pl.coalesce(
+            parts.struct.field("year"),       
+            year_from_title,             
+            year if isinstance(year, pl.Expr) else pl.lit(str(year)),
+        )
+        .cast(pl.Int32)
+    )
+
+    start_month = parts.struct.field("month").replace(MONTHS).cast(pl.Int8)
+
+    end_month = (
+        pl.when(parts.struct.field("month2").is_not_null())
+        .then(parts.struct.field("month2").replace(MONTHS))
+        .otherwise(parts.struct.field("month").replace(MONTHS))
+        .cast(pl.Int8)
+    )
+
+    start_day = parts.struct.field("day1").cast(pl.Int8)
+
+    end_day = (
+        pl.when(parts.struct.field("day3").is_not_null())
+        .then(parts.struct.field("day3"))
+        .when(parts.struct.field("day2").is_not_null())
+        .then(parts.struct.field("day2"))
+        .otherwise(parts.struct.field("day1"))
+        .cast(pl.Int8)
+    )
+
+    return [
+        pl.date(year_expr, start_month, start_day).alias("start_date"),
+        pl.date(year_expr, end_month, end_day).alias("end_date"),
+    ]
 
 class PollFetcher:
 
@@ -183,7 +262,7 @@ class PollFetcher:
 
         return table_dict
 
-   
+    # Dep
     def _formate(self, X, year):
         logger.debug("Reformating...")
         X = X.copy(deep=True)
@@ -204,6 +283,7 @@ class PollFetcher:
                 X[col] = FetcherUtils.clean_numeric_percent(X[col])
         return X
 
+    # Dep
     def _restrict_candidates(self, X, year):
         logger.debug("Restricting the candidate list to the actual candidates")
         X = X.copy(deep=True)
@@ -232,6 +312,7 @@ class PollFetcher:
         assert np.abs(X[candidates + ["Autres"]].sum(axis=1).mean() - 100.0) < 2
         return X
 
+    # Refactor
     def _add_political_trend(self, X, year):
         logger.debug("Adding political groups...")
         bloc = blocs[year]
@@ -266,6 +347,7 @@ class PollFetcher:
 
         return X
 
+    # Dep
     def _note_col_handling(self, X: pl.DataFrame) -> pl.DataFrame:
         X = X.drop([c for c in X.columns if c.startswith("Unnamed")])
 
@@ -283,7 +365,7 @@ class PollFetcher:
 
         return X
 
-
+    # Dep
     def _note_col_handling_(self, X):
         X = X.copy(deep=True)
         X = X.loc[:, ~X.columns.str.startswith("Unnamed")]
@@ -296,6 +378,7 @@ class PollFetcher:
             X.loc[idx, matching_col] = X.loc[idx, col].values
         return X
 
+    # Dep
     def concat_t2(self, year, table_dict):
         if table_selector[year]["tour 2"]["element2"] is not None:
             return pd.concat(
@@ -308,6 +391,7 @@ class PollFetcher:
         else:
             return table_dict[table_selector[year]["tour 2"]["element1"]]
 
+    # Dep
     def concat_t1(self, year, table_dict):
         X = pd.DataFrame()
         started = False
@@ -350,10 +434,10 @@ class PollFetcher:
 
     def _parse_source(self, X):
         return X.with_columns(
-            pl.col("source").str.contains("rolling", literal=True).alias("rolling"),
-            pl.col("source").str.replace_all("rolling", "", literal=True)
-        ).with_columns(
             source_raw=pl.col('source')
+        ).with_columns(
+            pl.col("source").str.contains("(rolling)", literal=True).alias("rolling"),
+            pl.col("source").str.replace_all("(rolling)", "", literal=True).str.strip_chars()
         ).with_columns(
             pl.col("source")
             .str.to_uppercase()
@@ -362,22 +446,39 @@ class PollFetcher:
         )
 
     def _parse_sample_size(self, X):
-        return X.with_columns(pl.col('sample_size').cast(pl.Int8, strict=False))
+        return X.with_columns(pl.col('sample_size').str.replace_all('\xa0', '').cast(pl.Int64, strict=False))
 
     def _parse_date(self, X):
-        return X
+        return X.with_columns(
+                parse_period(pl.col('date'), year=2022, title=pl.col('title'))
+            ).sort('end_date')
+
+    @staticmethod
+    def parse_c_col(col_expr: pl.Expr) -> pl.Expr:
+        return pl.struct(
+            raw=col_expr,
+            processed=col_expr.str.replace(r"^<\s*", "", literal=False).str.replace(",", ".", literal=True).str.extract(r"(\d+\.?\d*)", group_index=1).cast(pl.Float64, strict=False),
+            label=col_expr.str.extract(r"%\s*([A-Za-z].+)$", group_index=1).str.strip_chars(),
+            sign=col_expr.str.contains(r"^<", literal=False),
+        )
 
     def _parse_results(self, X):
-
+        c_cols = X.select(cs.starts_with("C_")).columns
+        return X.with_columns(
+                self.parse_c_col(pl.col(col)).alias(col)
+                for col in c_cols
+            ).unnest(*c_cols, separator="_")
 
     def formate(self, X):
         # 1. Institute
-        breakpoint()
         X = self._parse_source(X)
+        # 2. Sample size
         X = self._parse_sample_size(X)
+        # 3. Date
         X = self._parse_date(X)
+        # 4. Candidates results
         X = self._parse_results(X)
-        breakpoint()
+        return X
 
     def fetch_polls(self, year):
         """Method to get polling data for a given year"""
@@ -397,47 +498,19 @@ class PollFetcher:
         poll_dataset_t1 = self.formate(poll_dataset_t1)
         poll_dataset_t2 = self.formate(poll_dataset_t2)
 
+        poll_dataset_t1 = self._add_political_trend(poll_dataset_t1, year)
 
+        return {'t1': poll_dataset_t1, 't2': poll_dataset_t2}
 
-        # Put all in format
-
-        # Date parsing
-
-        # Adding bloc
-
-        # Make an institute id list
-
-        # N5
-        # Remove unamed cols
-        #poll_dataset_t1 = self._note_col_handling(poll_dataset_t1)
-
-        # Sondeur and Date
-        poll_dataset_t1 = self._formate(poll_dataset_t1, year)
-        poll_dataset_t2 = self._formate(poll_dataset_t2, year)
-
-        # Restrict candidates
-        poll_dataset = self._restrict_candidates(poll_dataset, year)
-
-        # Add political blocs
-        poll_dataset = self._add_political_trend(poll_dataset, year)
-
-        return poll_dataset, poll_dataset_t2
-
-    def save_s3(self, datasets, year):
+    def save_s3(self, data_path, datasets, year):
         election_type = "presidentiel"
         logger.debug("Saving to S3")
         t1, t2 = datasets
+        for tour in ['t1', 't2']:
+            if not DataUtils._detect_s3(data_path):
+                os.makedirs(f"{data_path}/{election_type}/{year}/{tour}", exist_ok=True)
 
-        if not DataUtils._detect_s3(data_path):
-            os.makedirs(f"{data_path}/{election_type}/{year}/", exist_ok=True)
-            os.makedirs(f"{data_path}/{election_type}/{year}/", exist_ok=True)
-
-        DataLoader.write_dataset(
-            t1,
-            data_path + f"{election_type}/{year}/polls_t1.parquet",
-        )
-        DataLoader.write_dataset(
-            t2,
-            data_path + f"{election_type}/{year}/polls_t2.parquet",
-        )
-
+            DataLoader.write_dataset(
+                datasets['tour'],
+                data_path + f"{election_type}/{year}/{tour}/polls.parquet",
+            )

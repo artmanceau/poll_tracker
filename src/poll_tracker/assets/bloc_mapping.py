@@ -1,4 +1,4 @@
-# Mapping should be complete
+# Mapping should be complete and done with the candidate_id
 
 blocs = {
     "2027": {

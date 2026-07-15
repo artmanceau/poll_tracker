@@ -137,8 +137,9 @@ candidates = {
             "Mitterrand",
             "François Mitterrand (PS)"
         ]
-    }
+    },
 }
+
 election_candidates = {
     "2022": [
         "arthaud",
@@ -184,7 +185,7 @@ second_round = {
 }
 
 alias_to_id = {
-    alias.lower(): cid
+    alias.lower(): f'C_{cid}'
     for cid, data in candidates.items()
     for alias in data["aliases"]
 }

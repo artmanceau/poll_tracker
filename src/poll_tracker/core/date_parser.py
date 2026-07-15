@@ -20,6 +20,7 @@ MONTH2_EXPR = pl.col("month2").replace(MONTHS)
 
 
 def parse_period(expr: pl.Expr, year: int | pl.Expr):
+    breakpoint()
     expr = (
         expr.str.to_lowercase()
         .str.replace_all("1er", "1")
