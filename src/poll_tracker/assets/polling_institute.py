@@ -12,7 +12,22 @@ INSTITUTES = {
         "variations": [
             "HARRIS INTERACTIVE",
             "HARRIS",
+            "Harris Interractive"
         ],
+    },
+    "kantar": {
+        'id': 15,
+        'name': 'Kantar',
+        "variations": [
+            'Kantar'
+        ]
+    },
+    'politico':{
+        'id':16,
+        'name': 'Politico',
+        'variations': [
+            'Atlas Politico'
+        ]
     },
     "opinionway": {
         "id": 2,

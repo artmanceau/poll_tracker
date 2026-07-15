@@ -1,8 +1,9 @@
 import polars as pl
 
 candidates = {
-    "arthaud": {
+   "arthaud": {
         "name": "Nathalie Arthaud",
+        "color": "#8B0000",  # Dark red
         "aliases": [
             "Arthaud",
             "Arthaud (LO)",
@@ -11,6 +12,7 @@ candidates = {
     },
     "poutou": {
         "name": "Philippe Poutou",
+        "color": "#C62828",  # Red
         "aliases": [
             "Poutou",
             "Poutou (NPA)",
@@ -19,6 +21,7 @@ candidates = {
     },
     "melenchon": {
         "name": "Jean-Luc Mélenchon",
+        "color": "#E53935",  # Bright left red
         "aliases": [
             "Mélenchon",
             "Mélenchon (LFI)",
@@ -28,6 +31,7 @@ candidates = {
     },
     "roussel": {
         "name": "Fabien Roussel",
+        "color": "#D32F2F",  # Communist red
         "aliases": [
             "Roussel",
             "Roussel (PCF)",
@@ -36,6 +40,7 @@ candidates = {
     },
     "hidalgo": {
         "name": "Anne Hidalgo",
+        "color": "#E91E63",  # Socialist pink
         "aliases": [
             "Hidalgo",
             "Hidalgo (PS)",
@@ -44,6 +49,7 @@ candidates = {
     },
     "jadot": {
         "name": "Yannick Jadot",
+        "color": "#43A047",  # Green
         "aliases": [
             "Jadot",
             "Jadot (EÉLV)",
@@ -53,6 +59,7 @@ candidates = {
     },
     "macron": {
         "name": "Emmanuel Macron",
+        "color": "#FBC02D",  # Yellow
         "aliases": [
             "Macron",
             "Macron (LREM)",
@@ -62,6 +69,7 @@ candidates = {
     },
     "pecresse": {
         "name": "Valérie Pécresse",
+        "color": "#1E88E5",  # Centre-right blue
         "aliases": [
             "Pécresse",
             "Pécresse (LR)",
@@ -70,6 +78,7 @@ candidates = {
     },
     "lassalle": {
         "name": "Jean Lassalle",
+        "color": "#8D6E63",  # Brown
         "aliases": [
             "Lassalle",
             "Lassalle (RES)",
@@ -78,6 +87,7 @@ candidates = {
     },
     "dupont_aignan": {
         "name": "Nicolas Dupont-Aignan",
+        "color": "#3949AB",  # Indigo
         "aliases": [
             "Dupont-Aignan",
             "Dupont-Aignan (DLF)",
@@ -86,6 +96,7 @@ candidates = {
     },
     "le_pen": {
         "name": "Marine Le Pen",
+        "color": "#0D47A1",  # Navy blue
         "aliases": [
             "Le Pen",
             "Le Pen (RN)",
@@ -96,6 +107,7 @@ candidates = {
     },
     "zemmour": {
         "name": "Éric Zemmour",
+        "color": "#212121",  # Almost black
         "aliases": [
             "Zemmour",
             "Zemmour (REC)",
@@ -104,6 +116,7 @@ candidates = {
     },
     "fillon": {
         "name": "François Fillon",
+        "color": "#1976D2",  # LR blue
         "aliases": [
             "Fillon",
             "Fillon (LR)",
@@ -112,6 +125,7 @@ candidates = {
     },
     "hollande": {
         "name": "François Hollande",
+        "color": "#EC407A",  # PS pink
         "aliases": [
             "Hollande",
             "François Hollande (PS)"
@@ -119,6 +133,7 @@ candidates = {
     },
     "sarkozy": {
         "name": "Nicolas Sarkozy",
+        "color": "#1565C0",  # UMP blue
         "aliases": [
             "Sarkozy",
             "Nicolas Sarkozy (UMP)"
@@ -126,6 +141,7 @@ candidates = {
     },
     "chirac": {
         "name": "Jacques Chirac",
+        "color": "#0D47A1",  # Gaullist navy
         "aliases": [
             "Chirac",
             "Jacques Chirac (RPR)"
@@ -133,10 +149,114 @@ candidates = {
     },
     "mitterrand": {
         "name": "François Mitterrand",
+        "color": "#C2185B",  # Historic PS magenta
         "aliases": [
             "Mitterrand",
             "François Mitterrand (PS)"
         ]
+    },
+    "taubira": {
+        "name": "Christiane Taubira",
+        "color": "#AD1457",
+        "aliases": [
+            "Taubira",
+            "Christiane Taubira",
+            "Taubira (DVG)",
+        ],
+    },
+
+    "montebourg": {
+        "name": "Arnaud Montebourg",
+        "color": "#C2185B",
+        "aliases": [
+            "Montebourg",
+            "Arnaud Montebourg",
+            "Montebourg (DVG)",
+        ],
+    },
+
+    "asselineau": {
+        "name": "François Asselineau",
+        "color": "#5C6BC0",
+        "aliases": [
+            "Asselineau",
+            "François Asselineau",
+            "Asselineau (UPR)",
+        ],
+    },
+
+    "philippot": {
+        "name": "Florian Philippot",
+        "color": "#283593",
+        "aliases": [
+            "Philippot",
+            "Florian Philippot",
+            "Philippot (LP)",
+        ],
+    },
+
+    "thouy": {
+        "name": "Hélène Thouy",
+        "color": "#66BB6A",
+        "aliases": [
+            "Thouy",
+            "Hélène Thouy",
+            "Thouy (PA)",
+        ],
+    },
+
+    "lagarde": {
+        "name": "Jean-Christophe Lagarde",
+        "color": "#64B5F6",
+        "aliases": [
+            "Lagarde",
+            "Jean-Christophe Lagarde",
+            "Lagarde (UDI)",
+        ],
+    },
+
+    "poisson": {
+        "name": "Jean-Frédéric Poisson",
+        "color": "#455A64",
+        "aliases": [
+            "Poisson",
+            "Jean-Frédéric Poisson",
+            "Poisson (VIA)",
+        ],
+    },
+
+    "cheminade": {
+        "name": "Jacques Cheminade",
+        "color": "#795548",
+        "aliases": [
+            "Cheminade",
+            "Jacques Cheminade",
+            "Cheminade (S&P)",
+        ],
+    },
+
+    "lr_candidate": {
+        "name": "Candidat LR",
+        "color": "#1976D2",
+        "aliases": [
+            "Candidat LR",
+            "Candidat LR/SL/DVD",
+        ],
+    },
+
+    "ps_candidate": {
+        "name": "Candidat PS/DVG",
+        "color": "#EC407A",
+        "aliases": [
+            "Candidat PS/DVG",
+        ],
+    },
+    "others": {
+        "name": "Autres",
+        "color": "#9E9E9E",
+        "aliases": [
+            "Autres",
+        ],
     },
 }
 
@@ -176,6 +296,7 @@ election_candidates = {
         "le_pen"
     ]
 }
+
 second_round = {
     "2022": ["macron", "le_pen"],
     "2017": ["macron", "le_pen"],
