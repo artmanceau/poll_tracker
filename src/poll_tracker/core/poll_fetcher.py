@@ -10,6 +10,7 @@ import requests
 from bs4 import BeautifulSoup
 from loguru import logger
 from poll_tracker.assets.candidates import candidate_map, alias_to_id
+from poll_tracker.assets.polling_institute import INSTITUTE_LOOKUP
 
 import polars.selectors as cs
 from poll_tracker.utils.data_loader import DataLoader, DataUtils
@@ -26,8 +27,57 @@ class PollFetcher:
         self.headers = {"User-Agent": "PollFetcher/1.0 (contact@example.com)"}
         self.events = []
 
+    @staticmethod
+    def _normalize_one_col(col, idx):
+                # Case 1: actual tuple column, e.g. ('Sondeur', None)
+                if isinstance(col, tuple):
+                    name = col[0]
+
+                # Case 2: stringified tuple, possibly with suffix, e.g. "('', None).3"
+                elif isinstance(col, str):
+                    m = re.match(r"^(.*?)(\.\d+)?$", col)
+                    raw = m.group(1)
+                    suffix = m.group(2) or ""
+
+                    try:
+                        parsed = ast.literal_eval(raw)
+                        if isinstance(parsed, tuple):
+                            name = parsed[0]
+                        else:
+                            name = raw
+                    except Exception:
+                        name = raw
+
+                    name = (name or "").strip()
+                    if not name:
+                        name = f"col_{idx}"
+                    return f"{name}{suffix}"
+
+                else:
+                    name = str(col)
+
+                name = (name or "").strip()
+                return name if name else f"col_{idx}"
+
+    @staticmethod
+    def normalize_columns(columns):
+        cleaned = [PollFetcher._normalize_one_col(col, i) for i, col in enumerate(columns)]
+        seen = {}
+        out = []
+
+        for name in cleaned:
+            if name in seen:
+                seen[name] += 1
+                out.append(f"{name}_{seen[name]}")
+
+            else:
+                seen[name] = 0
+                out.append(name)
+
+        return out
+
     def fetch_page(self, url):
-        """Fetching through BeautifulSoup"""
+        """Fetching page through BeautifulSoup"""
         # 1. Request page
         r = requests.get(url, headers=self.headers)
         r.raise_for_status()
@@ -72,80 +122,43 @@ class PollFetcher:
             if getattr(df.columns, "nlevels", 1) > 1:
                 df.columns = df.columns.get_level_values(1)
 
-            def _normalize_one_col(col, idx):
-                # Case 1: actual tuple column, e.g. ('Sondeur', None)
-                if isinstance(col, tuple):
-                    name = col[0]
-
-                # Case 2: stringified tuple, possibly with suffix, e.g. "('', None).3"
-                elif isinstance(col, str):
-                    m = re.match(r"^(.*?)(\.\d+)?$", col)
-                    raw = m.group(1)
-                    suffix = m.group(2) or ""
-
-                    try:
-                        parsed = ast.literal_eval(raw)
-                        if isinstance(parsed, tuple):
-                            name = parsed[0]
-                        else:
-                            name = raw
-                    except Exception:
-                        name = raw
-
-                    name = (name or "").strip()
-                    if not name:
-                        name = f"col_{idx}"
-                    return f"{name}{suffix}"
-
-                else:
-                    name = str(col)
-
-                name = (name or "").strip()
-                return name if name else f"col_{idx}"
-
-            def normalize_columns(columns):
-                    cleaned = [_normalize_one_col(col, i) for i, col in enumerate(columns)]
-                    seen = {}
-                    out = []
-
-                    for name in cleaned:
-                        if name in seen:
-                            seen[name] += 1
-                            out.append(f"{name}_{seen[name]}")
-                        else:
-                            seen[name] = 0
-                            out.append(name)
-
-                    return out
-
             # 1) normalize column names first
-            df.columns = normalize_columns(df.columns)
+            df.columns = PollFetcher.normalize_columns(df.columns)
 
-            candidates = set(df.columns) - set(['Sondeur', 'Échantillon', 'Dates', 'Date']) 
-            # Handle links
+            # 2) Unnest link/elements
             for col in df.columns:
                 if df[col].map(lambda x: isinstance(x, tuple)).any():
                     df[f"{col}_href"] = df[col].map(lambda x: x[1] if isinstance(x, tuple) else None)
                     df[col] = df[col].map(lambda x: x[0] if isinstance(x, tuple) else x)
 
+            # Drop rows with only missing values
             df = df.dropna(how="all")
 
-            # Handle events
+            # Handle events — collected as lines without variations in the cell values
             mask_rows = df.apply(lambda r: r.dropna().nunique() <= 3, axis=1)
             self.events += (
                 df[mask_rows].apply(lambda r: r.dropna().iat[0], axis=1).values
             ).tolist()
             df = df[~mask_rows].reset_index(drop=True)
 
+            # Convert to polars
             data = pl.from_pandas(df)
-
+            
             # Normalize columns names
             # Date, Dates -> date
             # Sondeur -> source
-            # Échantillon -> sample
+            # Échantillon -> sample_size
 
-            # 4. Convert to pandas
-            table_dict[key] = data.rename({
+            # Candidates -> candidate_id
+
+            # Drop href
+
+            # Replace [N x]
+
+            # Remove line Sondeur, Date, Echantillon
+
+            # Add rolling column
+            data = data.rename({
                 'Sondeur': 'source',
                 'Sondeur_href': 'source_link',
                 'Date': 'date',
@@ -156,11 +169,21 @@ class PollFetcher:
                 col: alias_to_id.get(col.lower(), col)
                 for col in data.columns
             }).with_columns(
-                pl.lit(key).alias('title')
-            ).drop(cs.contains("href"))
+                pl.lit(key).alias('title'),
+            ).drop(
+                cs.contains("href")
+            ).with_columns(
+                cs.string().str.replace_all(r"\[N \d+\]", ""),
+            )
+
+            if 'source' in data.columns: 
+                data = data.filter(pl.col('source') != 'Sondeur')
+
+            table_dict[key] = data
 
         return table_dict
 
+   
     def _formate(self, X, year):
         logger.debug("Reformating...")
         X = X.copy(deep=True)
@@ -313,7 +336,7 @@ class PollFetcher:
 
             if key == selector["start"]:
                 started = True
-            
+
             frames.append(
                 df.unique()
                 if len(df.columns) == len(set(df.columns))
@@ -325,6 +348,37 @@ class PollFetcher:
 
         return pl.concat(frames, how="diagonal_relaxed")
 
+    def _parse_source(self, X):
+        return X.with_columns(
+            pl.col("source").str.contains("rolling", literal=True).alias("rolling"),
+            pl.col("source").str.replace_all("rolling", "", literal=True)
+        ).with_columns(
+            source_raw=pl.col('source')
+        ).with_columns(
+            pl.col("source")
+            .str.to_uppercase()
+            .replace_strict(INSTITUTE_LOOKUP, default=None)
+            .alias("source")
+        )
+
+    def _parse_sample_size(self, X):
+        return X.with_columns(pl.col('sample_size').cast(pl.Int8, strict=False))
+
+    def _parse_date(self, X):
+        return X
+
+    def _parse_results(self, X):
+
+
+    def formate(self, X):
+        # 1. Institute
+        breakpoint()
+        X = self._parse_source(X)
+        X = self._parse_sample_size(X)
+        X = self._parse_date(X)
+        X = self._parse_results(X)
+        breakpoint()
+
     def fetch_polls(self, year):
         """Method to get polling data for a given year"""
         logger.info(f"Getting poll data for year: {year}")
@@ -335,13 +389,15 @@ class PollFetcher:
         table_dict = self.parse_page(tables, soup_tables)
 
         # Instantiate the datasets
-        breakpoint()
         poll_dataset_t1, poll_dataset_t2 = (
             self.concat_tour(year, table_dict,  "tour 1"),
             self.concat_tour(year, table_dict,  "tour 2"),
         )
 
-        breakpoint()
+        poll_dataset_t1 = self.formate(poll_dataset_t1)
+        poll_dataset_t2 = self.formate(poll_dataset_t2)
+
+
 
         # Put all in format
 
@@ -353,7 +409,7 @@ class PollFetcher:
 
         # N5
         # Remove unamed cols
-        poll_dataset_t1 = self._note_col_handling(poll_dataset_t1)
+        #poll_dataset_t1 = self._note_col_handling(poll_dataset_t1)
 
         # Sondeur and Date
         poll_dataset_t1 = self._formate(poll_dataset_t1, year)

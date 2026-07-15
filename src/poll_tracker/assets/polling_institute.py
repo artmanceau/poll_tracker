@@ -1,4 +1,10 @@
 INSTITUTES = {
+    "resultats" : {
+        "id": 0,
+        "name": "Résultats",
+        "variations": [
+        ],
+    },
     "harris_interactive": {
         "id": 1,
         "name": "Harris Interactive",
@@ -104,7 +110,7 @@ INSTITUTES = {
 }
 
 INSTITUTE_LOOKUP = {
-    variation.upper(): data["id"]
+    variation.upper(): data["name"]
     for data in INSTITUTES.values()
     for variation in data["variations"]
 }
