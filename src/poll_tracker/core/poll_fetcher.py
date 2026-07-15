@@ -14,6 +14,7 @@ import polars.selectors as cs
 from poll_tracker.assets.bloc_mapping import blocs, blocs_level_1, blocs_level_2, blocs_level_3
 from poll_tracker.assets.scrapping_asset import table_selector, links
 
+RESULTATS = ['Résultats', 'Résultats officiels']
 
 def parse_period(expr: pl.Expr, year: int | pl.Expr, title: pl.Expr):
     expr = (
@@ -210,12 +211,13 @@ class PollFetcher:
             # Replace [N x]
 
             # Remove line Sondeur, Date, Echantillon
-
+            
             # Add rolling column
             data = data.rename({
                 'Sondeur': 'source',
                 'Sondeur_href': 'source_link',
                 'Date': 'date',
+                "Dernier jour du sondage":'date',
                 'Dates': 'date',
                 'Échantillon': 'sample_size'},
                 strict=False
@@ -365,7 +367,8 @@ class PollFetcher:
         # 1. Institute
         X = self._parse_source(X)
         # 2. Sample size
-        X = self._parse_sample_size(X)
+        if 'sample_size' in X.columns:
+            X = self._parse_sample_size(X)
         # 3. Date
         X = self._parse_date(X)
         # 4. Candidates results
@@ -382,17 +385,19 @@ class PollFetcher:
         # 2. Extract the results row as a reference Series per column
         results_row = (
             X
-            .filter(pl.col('source') == 'Résultats')
+            .filter(pl.col('source').is_in(RESULTATS))
             .select(score_cols)
         )
 
         # 3. Compute error columns (difference with results row) for each matching col
         matching_cols = X.select(score_cols).columns
 
-        X = X.with_columns([
-            (pl.col(c) - pl.lit(results_row.get_column(c)[0])).alias(f"E_{c}")
-            for c in matching_cols
-        ])
+        if results_row.height > 0:
+            X = X.with_columns([
+                (pl.col(c) - pl.lit(results_row.get_column(c)[0])).alias(f"E_{c}")
+                for c in matching_cols
+            ])
+        
         return X
 
     def fetch_polls(self, year):
@@ -404,14 +409,13 @@ class PollFetcher:
         wikipedia_page_url = links[year]
         tables, soup_tables = self.fetch_page(wikipedia_page_url)
         table_dict = self.parse_page(tables, soup_tables)
-
         # Instantiate the datasets
         logger.debug('Concat all tables')
+
         poll_dataset_t1, poll_dataset_t2 = (
             self.concat_tour(year, table_dict,  "tour 1"),
             self.concat_tour(year, table_dict,  "tour 2"),
         )
-
         logger.debug('Reformatting')
         poll_dataset_t1 = self.formate(poll_dataset_t1)
         poll_dataset_t2 = self.formate(poll_dataset_t2)

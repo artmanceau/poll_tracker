@@ -1,20 +1,18 @@
 from poll_tracker.core.poll_fetcher import PollFetcher
+from pathlib import Path
+import json
 
 
-# In config
-YEARS = ["2022",  "2012", "2017", "2007", "2027"]  # , "1988"]  Bug with 1988
-
-data_path = "s3://arthurmanceau/poll_tracker/data/polls/"
-# data_path = "data/polls/"
-
-# Implement through real CLI
 if __name__ == "__main__":
 
     # Load class
     fetcher = PollFetcher()
 
     # Load config
+    config_path = Path("config/extraction_config.json")
+    with config_path.open("r", encoding="utf-8") as f:
+        config = json.load(f)
 
-    for year in YEARS:
+    for year in config['years']:
         datasets = fetcher.fetch_polls(year)
-        fetcher.save_s3(data_path, datasets, year)
+        fetcher.save_s3(config['data_path'], datasets, year)

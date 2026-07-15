@@ -10,6 +10,7 @@ from statsmodels.nonparametric.smoothers_lowess import lowess
 CANDIDATE_COLORS = {f'C_{item}_processed': df['color'] for item, df in candidates.items()}
 BLOC_COLORS = {f'BP_{item}': color for item, color in BLOC_COLORS.items()}
 
+
 def poll_evolution_plot(
     polls,
     official,

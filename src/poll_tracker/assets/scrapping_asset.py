@@ -52,17 +52,17 @@ table_selector = {
     },
     "2002": {
         "tour 1": {"start": "Avril", "end": "1999"},
-        "tour 2": {"start": "Chirac - Le Pen", "end": None},
+        "tour 2": {"start": "Chirac - Le Pen", "end": "Chirac - Le Pen"},
     },
     "1995": {
-        "tour 1": {"start": "En 1995", "end": "En 1995"},
-        "tour 2": {"start": "Balladur - Chirac", "end": None},
+        "tour 1": {"start": 'Élection présidentielle française de 1995 (2)', "end": 'Élection présidentielle française de 1995 (2)'},
+        "tour 2": {"start": 'Balladur - Jospin', "end": 'Balladur - Jospin'},
     },
     "1988": {
         "tour 1": {
-            "start": "Sondages concernant le premier tour (2)",
-            "end": "Sondages concernant le premier tour (2)",
+            "start": "Élection présidentielle française de 1988 (2)",
+            "end": "Élection présidentielle française de 1988 (2)",
         },
-        "tour 2": {"start": "Mitterrand - Chirac", "end": None},
+        "tour 2": {"start": 'Sondages concernant le premier tour', "end": 'Sondages concernant le premier tour'},
     },
 }
