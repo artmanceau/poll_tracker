@@ -7,6 +7,7 @@ from datetime import date
 
 BASE = "https://www.commission-des-sondages.fr"
 
+# Use entity resolution 
 INSTITUTES = [
     "HARRIS INTERACTIVE",
     "OPINION WAY",
@@ -25,6 +26,7 @@ INSTITUTES = [
     "SAGIS",
     "PIGE",
 ]
+# Use date utils
 MONTHS_FR = [
     "janvier",
     "fevrier",

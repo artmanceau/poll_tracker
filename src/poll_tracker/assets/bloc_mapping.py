@@ -1,14 +1,10 @@
-# Mapping should be complete and done with the candidate_id
-
 blocs = {
     "2027": {
         "G": [
-            "Arthaud (LO)",
-            # "Poutou[a] (NPA)",
-            "Mélenchon (LFI)",
-            "Roussel (PCF)",
-            # "Poutou[a] (NPA-A)",
-            "Mélenchon[b] (LFI)",
+            "arthaud",
+            "poutou"
+            "melenchon",
+            "roussel",
         ],
         "CG": [
             "Tondelier (LÉ)",
@@ -30,16 +26,16 @@ blocs = {
         ],
     },
     "2022": {
-        "G": ["Arthaud (LO)", "Poutou (NPA)", "Roussel (PCF)", "Mélenchon (LFI)"],
+        "G": ["arthaud", "poutou", "roussel", "melenchon"],
         "CG": [
-            "Hidalgo (PS)",
-            "Jadot (EÉLV)",
+            "hidalgo",
+            "jadot",
         ],
-        "C": ["Macron (LREM)"],
+        "C": ["macron"],
         "CD": [
-            "Pécresse (LR)",
+            "pecresse",
         ],
-        "D": ["Dupont-Aignan (DLF)", "Le Pen (RN)", "Zemmour (REC)"],
+        "D": ["dupont_aignan", "le_pen", "zemmour"],
     },
     "2017": {
         "G": [

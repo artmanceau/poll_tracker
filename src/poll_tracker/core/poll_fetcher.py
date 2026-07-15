@@ -1,6 +1,4 @@
-import os
 import re
-from datetime import date
 from io import StringIO
 import polars as pl
 import numpy as np
@@ -9,39 +7,15 @@ import ast
 import requests
 from bs4 import BeautifulSoup
 from loguru import logger
-from poll_tracker.assets.candidates import candidate_map, alias_to_id
+from poll_tracker.assets.candidates import alias_to_id
+from poll_tracker.assets.date_utils import MONTHS
 from poll_tracker.assets.polling_institute import INSTITUTE_LOOKUP
 import polars.selectors as cs
-from poll_tracker.utils.data_loader import DataLoader, DataUtils
-
-from poll_tracker.assets.bloc_mapping import * 
-from poll_tracker.assets.candidates import *
-from poll_tracker.assets.date_utils import FRENCH_MONTHS
+from poll_tracker.assets.bloc_mapping import blocs, blocs_level_1, blocs_level_2, blocs_level_3
 from poll_tracker.assets.scrapping_asset import table_selector, links
-from poll_tracker.core.fetcher_utils import FetcherUtils
 
 
-
-MONTHS = {
-    "janvier": "01",
-    "février": "02",
-    "mars": "03",
-    "avril": "04",
-    "mai": "05",
-    "juin": "06",
-    "juillet": "07",
-    "août": "08",
-    "septembre": "09",
-    "octobre": "10",
-    "novembre": "11",
-    "décembre": "12",
-}
-
-MONTH_EXPR = pl.col("month").replace(MONTHS)
-MONTH2_EXPR = pl.col("month2").replace(MONTHS)
-
-
-def parse_period(expr: pl.Expr, year: int | pl.Expr, title:pl.Expr):
+def parse_period(expr: pl.Expr, year: int | pl.Expr, title: pl.Expr):
     expr = (
         expr.str.to_lowercase()
         .str.replace_all("1er", "1")
@@ -99,6 +73,7 @@ def parse_period(expr: pl.Expr, year: int | pl.Expr, title:pl.Expr):
         pl.date(year_expr, start_month, start_day).alias("start_date"),
         pl.date(year_expr, end_month, end_day).alias("end_date"),
     ]
+
 
 class PollFetcher:
 
@@ -262,151 +237,69 @@ class PollFetcher:
 
         return table_dict
 
-    # Dep
-    def _formate(self, X, year):
-        logger.debug("Reformating...")
-        X = X.copy(deep=True)
-        X[["Sondeur", "Dates"]] = X[["Sondeur", "Dates"]].astype(str)
-        X.loc[X["Sondeur"] == "Harris Interractive", "Sondeur"] = "Harris Interactive"
-        X.loc[X["Sondeur"] == "Cluster 17", "Sondeur"] = "Cluster17"
-        X.loc[X["Sondeur"] == "Opinionway", "Sondeur"] = "OpinionWay"
-        X.loc[:, "Dates_pd"] = X.loc[:, "Dates"].apply(
-            lambda s: FetcherUtils.parse_french_date_range(s, default_year=int(year))
-        )
-        if "Échantillon" in X.columns:
-            X.loc[0, "Échantillon"] = FetcherUtils.clean_number(X.loc[0, "Échantillon"])
-            X["Échantillon"] = (
-                X["Échantillon"].astype(str).str.replace("\u00a0", "", regex=False)
-            )
-        for col in X.columns:
-            if col not in ["Sondeur", "Dates", "Échantillon", "Dates_pd"]:
-                X[col] = FetcherUtils.clean_numeric_percent(X[col])
-        return X
+    @staticmethod
+    def adjust_blocs(df: pl.DataFrame, blocs: list[str]) -> pl.DataFrame:
+        row_sums_expr = pl.sum_horizontal([f"{b}_raw" for b in blocs])
+        delta = df.select(
+            ((100 - row_sums_expr) / len(blocs)).alias("delta")
+        ).get_column("delta")
+        return df.with_columns([
+            (pl.col(f"{b}_raw") + pl.lit(delta)).alias(b)
+            for b in blocs
+        ])
 
-    # Dep
-    def _restrict_candidates(self, X, year):
-        logger.debug("Restricting the candidate list to the actual candidates")
-        X = X.copy(deep=True)
-        candidates = candidates_list[year]
-        if "Abstention" in X.columns:
-            X = X.drop(columns="Abstention")
-        if "Indécis (échantillon)" in X.columns:
-            X = X.drop(columns="Indécis (échantillon)")
-        if "Indécis" in X.columns:
-            X = X.drop(columns="Indécis")
-        not_candidate_cols = list(
-            set(X.columns)
-            - set(
-                candidates + ["Dates", "Dates_pd", "Échantillon", "Sondeur", "Autres"]
-            )
-        )
-        X["Autres"] = X[not_candidate_cols].sum(axis=1)
-        X.drop(columns=[c for c in not_candidate_cols if c in X.columns], inplace=True)
-
-        mask = np.abs(X[candidates + ["Autres"]].sum(axis=1) - 100) > 10
-        X.drop(index=X[mask].index, inplace=True)
-        logger.warning(
-            f"Dropping {mask.astype(int).sum()} because of inconsistent results"
-        )
-
-        assert np.abs(X[candidates + ["Autres"]].sum(axis=1).mean() - 100.0) < 2
-        return X
-
-    # Refactor
-    def _add_political_trend(self, X, year):
+    def _add_political_trend(self, X, year, blocs):
         logger.debug("Adding political groups...")
         bloc = blocs[year]
-        X = X.copy(deep=True)
-        for b, canditates in bloc.items():
-            X[f"{b}_raw"] = X[canditates].sum(axis=1)
+        X = X.with_columns(
+                all_scores_candidates_sum=pl.sum_horizontal(
+                    cs.starts_with("C_") & cs.ends_with("_processed")
+                )
+            ).with_columns([
+                pl.sum_horizontal([
+                    pl.col(f"C_{candidate}_processed")
+                    for candidate in candidates
+                ]).alias(f"{b}_raw")
+                for b, candidates in bloc.items()
+            ]).with_columns(
+                GCG_raw=(pl.col("G_raw") + pl.col("CG_raw")).round(2),
+                DCD_raw=(pl.col("D_raw") + pl.col("CD_raw")).round(2),
+                CGCCD=(pl.col("CG_raw") + pl.col("C_raw") + pl.col("CD_raw")).round(2),
+                TG_raw=(pl.col("G_raw") + pl.col("CG_raw") + pl.col("C_raw") / 2).round(2),
+                TD_raw=(pl.col("D_raw") + pl.col("CD_raw") + pl.col("C_raw") / 2).round(2),
+            ).with_columns(
+                all_scores_bloc_sum=pl.sum_horizontal(
+                    [pl.col(f'{b}_raw') for b in bloc.keys()]
+                )
+            ).with_columns(
+                missing=100 - pl.col('all_scores_bloc_sum')
+        )
 
-        X["GCG_raw"] = X["G_raw"] + X["CG_raw"] / 2
-        X["DCD_raw"] = X["D_raw"] + X["CD_raw"] / 2
-        X["TG_raw"] = X["G_raw"] + X["CG_raw"] + X["C_raw"] / 2
-        X["TD_raw"] = X["D_raw"] + X["CD_raw"] + X["C_raw"] / 2
+        for blocs_levels in [blocs_level_1, blocs_level_2, blocs_level_3]:
+            mean = X.select(
+                pl.sum_horizontal([f"{b}_raw" for b in blocs_levels]).mean()
+            ).item()
+            assert 50 < mean < 100, f"mean {mean} not in (50, 100)"
 
-        assert 50 < X[[f"{b}_raw" for b in blocs_level_1]].sum(axis=1).mean() < 100
-        assert 50 < X[[f"{b}_raw" for b in blocs_level_2]].sum(axis=1).mean() < 100
-        assert 50 < X[[f"{b}_raw" for b in blocs_level_3]].sum(axis=1).mean() < 100
+        # Adjust each bloc level to sum to 100
+        # Candidates not in bloc vote are split evenly between the blocs
+        X = self.adjust_blocs(X, bloc.keys())
 
-        # Adjust to make them sum to 1
-        delta_1 = (
-            100 - X[[f"{b}_raw" for b in blocs_level_1]].sum(axis=1).mean()
-        ) / len(blocs_level_1)
-        for bloc in blocs_level_1:
-            X[bloc] = X[f"{bloc}_raw"] + delta_1
+        # Derived adjusted columns
+        X = X.with_columns(
+            GCG=(pl.col("G") + pl.col("CG")).round(2),
+            DCD=(pl.col("D") + pl.col("CD")).round(2),
+            CGCCD=(pl.col("CG") + pl.col("C") + pl.col("CD")).round(2),
+            TG=(pl.col("G") + pl.col("CG") + pl.col("C") / 2).round(2),
+            TD=(pl.col("D") + pl.col("CD") + pl.col("C") / 2).round(2),
+        )
+        # Final assertions
+        for blocs in [blocs_level_1, blocs_level_2, blocs_level_3]:
+            mean = X.select(
+                pl.sum_horizontal([f"{b}" for b in blocs]).mean()
+            ).item()
+            assert np.isclose(mean, 100), f"mean {mean} not close to 100"
 
-        X["GCG"] = X["G"] + X["CG"]
-        X["DCD"] = X["D"] + X["CD"]
-        X["TG"] = X["G"] + X["CG"] + X["C"] / 2
-        X["TD"] = X["D"] + X["CD"] + X["C"] / 2
-
-        assert np.isclose(X[blocs_level_1].sum(axis=1).mean(), 100)
-        assert np.isclose(X[blocs_level_2].sum(axis=1).mean(), 100)
-        assert np.isclose(X[blocs_level_3].sum(axis=1).mean(), 100)
-
-        return X
-
-    # Dep
-    def _note_col_handling(self, X: pl.DataFrame) -> pl.DataFrame:
-        X = X.drop([c for c in X.columns if c.startswith("Unnamed")])
-
-        n5_cols = [c for c in X.columns if re.search(r"\[N\s*5\]", c)]
-
-        for col in n5_cols:
-            matching_col = re.sub(r"\s*\[N\s*5\]\s*", " ", col).strip()
-
-            if matching_col in X.columns:
-                X = X.with_columns(
-                    pl.coalesce(
-                        [pl.col(matching_col), pl.col(col)]
-                    ).alias(matching_col)
-                ).drop(col)
-
-        return X
-
-    # Dep
-    def _note_col_handling_(self, X):
-        X = X.copy(deep=True)
-        X = X.loc[:, ~X.columns.str.startswith("Unnamed")]
-        # Reconcile columns with almosth the same name
-        n5_cols = X.columns[X.columns.str.contains(r"\[N 5\]")]
-        for col in n5_cols:
-            matching_col = re.sub(r"\s*\[N\s*5\]\s*", " ", str(col))
-            print(matching_col in X.columns)
-            idx = X[col].dropna().index
-            X.loc[idx, matching_col] = X.loc[idx, col].values
-        return X
-
-    # Dep
-    def concat_t2(self, year, table_dict):
-        if table_selector[year]["tour 2"]["element2"] is not None:
-            return pd.concat(
-                [
-                    table_dict[table_selector[year]["tour 2"]["element1"]],
-                    table_dict[table_selector[year]["tour 2"]["element2"]],
-                ],
-                ignore_index=True,
-            )
-        else:
-            return table_dict[table_selector[year]["tour 2"]["element1"]]
-
-    # Dep
-    def concat_t1(self, year, table_dict):
-        X = pd.DataFrame()
-        started = False
-        for key, df in table_dict.items():
-            if key != table_selector[year]["tour 1"]["start"] and (not started):
-                continue
-            elif key == table_selector[year]["tour 1"]["start"]:
-                started = True
-
-            X = X.loc[:, ~X.columns.duplicated()]
-            df = df.loc[:, ~df.columns.duplicated()]
-            X = pd.concat([X, df], ignore_index=True)
-
-            if key == table_selector[year]["tour 1"]["end"]:
-                break
         return X
 
     def concat_tour(self, year, table_dict, tour):
@@ -451,7 +344,7 @@ class PollFetcher:
     def _parse_date(self, X):
         return X.with_columns(
                 parse_period(pl.col('date'), year=2022, title=pl.col('title'))
-            ).sort('end_date')
+            ).sort('end_date', descending=True)
 
     @staticmethod
     def parse_c_col(col_expr: pl.Expr) -> pl.Expr:
@@ -498,19 +391,12 @@ class PollFetcher:
         poll_dataset_t1 = self.formate(poll_dataset_t1)
         poll_dataset_t2 = self.formate(poll_dataset_t2)
 
-        poll_dataset_t1 = self._add_political_trend(poll_dataset_t1, year)
+        poll_dataset_t1 = self._add_political_trend(poll_dataset_t1, year, blocs=blocs)
 
         return {'t1': poll_dataset_t1, 't2': poll_dataset_t2}
 
     def save_s3(self, data_path, datasets, year):
         election_type = "presidentiel"
         logger.debug("Saving to S3")
-        t1, t2 = datasets
         for tour in ['t1', 't2']:
-            if not DataUtils._detect_s3(data_path):
-                os.makedirs(f"{data_path}/{election_type}/{year}/{tour}", exist_ok=True)
-
-            DataLoader.write_dataset(
-                datasets['tour'],
-                data_path + f"{election_type}/{year}/{tour}/polls.parquet",
-            )
+            datasets[tour].write_parquet(data_path + f"{election_type}/{year}/{tour}/polls.parquet")

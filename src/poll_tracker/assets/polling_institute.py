@@ -1,8 +1,9 @@
 INSTITUTES = {
-    "resultats" : {
+    "resultats": {
         "id": 0,
         "name": "Résultats",
         "variations": [
+            "Résultats"
         ],
     },
     "harris_interactive": {
