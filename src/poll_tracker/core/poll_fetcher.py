@@ -20,6 +20,7 @@ def parse_period(expr: pl.Expr, year: int | pl.Expr, title: pl.Expr):
     expr = (
         expr.str.to_lowercase()
         .str.replace_all("1er", "1")
+        .str.replace_all(r"\bavr\b", "avril")
         .str.replace_all(r"\s*-\s*", "-")
         .str.replace_all(r"\s+", " ")
         .str.strip_chars()
@@ -209,28 +210,30 @@ class PollFetcher:
             # Drop href
 
             # Replace [N x]
+            if 'Candidat EPR.1' in data.columns:
+                data = data.drop('Candidat EPR.1')
 
             # Remove line Sondeur, Date, Echantillon
-            
             # Add rolling column
             data = data.rename({
-                'Sondeur': 'source',
-                'Sondeur_href': 'source_link',
-                'Date': 'date',
-                "Dernier jour du sondage":'date',
-                'Dates': 'date',
-                'Échantillon': 'sample_size'},
-                strict=False
-            ).rename({
-                col: alias_to_id.get(col.lower(), col)
-                for col in data.columns
-            }).with_columns(
-                pl.lit(key).alias('title'),
-            ).drop(
-                cs.contains("href")
-            ).with_columns(
-                cs.string().str.replace_all(r"\[N \d+\]", ""),
+                    'Sondeur': 'source',
+                    'Sondeur_href': 'source_link',
+                    'Date': 'date',
+                    "Dernier jour du sondage": 'date',
+                    'Dates': 'date',
+                    'Échantillon': 'sample_size'},
+                    strict=False
+                ).rename({
+                    col: alias_to_id.get(col.lower(), col)
+                    for col in data.columns
+                }).with_columns(
+                    pl.lit(key).alias('title'),
+                ).drop(
+                    cs.contains("href")
+                ).with_columns(
+                    cs.string().str.replace_all(r"\[N \d+\]", ""),
             )
+            
 
             if 'source' in data.columns: 
                 data = data.filter(pl.col('source') != 'Sondeur')

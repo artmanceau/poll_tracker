@@ -94,10 +94,83 @@ candidates = {
         "aliases": [
             "Nicolas Sarkozy",
             "Sarkozy",
-            "C_sarkozy_raw",
-            "C_sarkozy_processed",
-            "C_sarkozy_label",
-            "C_sarkozy_sign",
+            "Nicolas Sarkozy (LR)"
+        ],
+    },
+    "cope": {
+        "name": "Jean-François Copé",
+        "color": "#4169E1",  # UMP/LR blue
+        "aliases": [
+            "Jean-François Copé (UMP)",
+            "Jean-Francois Cope (UMP)",
+            "Jean-François Copé",
+            "Copé",
+        ],
+    },
+    "duflot": {
+        "name": "Cécile Duflot",
+        "color": "#228B22",  # EELV green
+        "aliases": [
+            "Cécile Duflot (EELV)",
+            "Cecile Duflot (EELV)",
+            "Cécile Duflot",
+            "Duflot",
+        ],
+    },
+    "le_maire": {
+        "name": "Bruno Le Maire",
+        "color": "#4169E1",
+        "aliases": [
+            "Bruno Le Maire (LR)",
+            "Bruno Le Maire",
+            "Le Maire",
+        ],
+    },
+    "juppe": {
+        "name": "Alain Juppé",
+        "color": "#4169E1",
+        "aliases": [
+            "Alain Juppé (LR)",
+            "Alain Juppe (LR)",
+            "Alain Juppé",
+            "Juppé",
+        ],
+    },
+    "montebourg": {
+        "name": "Arnaud Montebourg",
+        "color": "#E91E63",  # PS
+        "aliases": [
+            "Arnaud Montebourg (PS)",
+            "Arnaud Montebourg",
+            "Montebourg",
+        ],
+    },
+    "peillon": {
+        "name": "Vincent Peillon",
+        "color": "#E91E63",  # PS
+        "aliases": [
+            "Vincent Peillon (PS)",
+            "Vincent Peillon",
+            "Peillon",
+        ],
+    },
+    "valls": {
+        "name": "Manuel Valls",
+        "color": "#E91E63",  # PS
+        "aliases": [
+            "Manuel Valls (PS)",
+            "Manuel Valls",
+            "Valls",
+        ],
+    },
+    "hamon": {
+        "name": "Benoît Hamon",
+        "color": "#E91E63",  # PS
+        "aliases": [
+            "Benoît Hamon (PS)",
+            "Benoit Hamon (PS)",
+            "Benoît Hamon",
+            "Hamon",
         ],
     },
     "de_villiers": {
@@ -325,7 +398,9 @@ candidates = {
             "Macron",
             "Macron (LREM)",
             "Macron (EM)",
-            "Emmanuel Macron"
+            "Emmanuel Macron",
+            "Emmanuel Macron (SE)",
+            "Emmanuel Macron (DVG)"
         ]
     },
     "pecresse": {
@@ -418,7 +493,9 @@ candidates = {
         "aliases": [
             "Fillon",
             "Fillon (LR)",
-            "François Fillon (LR)"
+            "François Fillon (LR)",
+            "François Fillon[N 3] (LR)",
+            "François Fillon (UMP)"
         ]
     },
     "hollande": {
@@ -529,6 +606,35 @@ candidates = {
             "Christiane Taubira (PRG)"
         ],
     },
+    "megret": {
+        "name": "Bruno Mégret",
+        "color": "#000080",  # nationalist right (navy)
+        "aliases": [
+            "Bruno Mégret (MNR)",
+            "Bruno Mégret",
+            "Megret",
+            "Mégret",
+        ],
+    },
+    "gluckstein": {
+        "name": "Daniel Gluckstein",
+        "color": "#B22222",  # far-left red
+        "aliases": [
+            "Daniel Gluckstein (POI)",
+            "Daniel Gluckstein",
+            "Gluckstein",
+            "Gluckstein (POI)",
+        ],
+    },
+    "pasqua": {
+        "name": "Charles Pasqua",
+        "color": "#4169E1",  # right/gaullist blue
+        "aliases": [
+            "Charles Pasqua (RPF)",
+            "Charles Pasqua",
+            "Pasqua",
+        ],
+    },
     "madelin": {
         "name": "Alain Madelin",
         "color": "#4169E1",  # liberal/center-right blue
@@ -576,7 +682,6 @@ candidates = {
             "Montebourg (DVG)",
         ],
     },
-
     "asselineau": {
         "name": "François Asselineau",
         "color": "#5C6BC0",
@@ -584,9 +689,9 @@ candidates = {
             "Asselineau",
             "François Asselineau",
             "Asselineau (UPR)",
+            "François Asselineau (UPR)"
         ],
     },
-
     "philippot": {
         "name": "Florian Philippot",
         "color": "#283593",
@@ -634,7 +739,8 @@ candidates = {
             "Jacques Cheminade",
             "Cheminade (S&P)",
             "Jacques Cheminade (S&P)",
-            "Jacques Cheminade (FNS)"
+            "Jacques Cheminade (FNS)",
+            "Jacques Cheminade (SP)"
         ],
     },
      "hue": {
