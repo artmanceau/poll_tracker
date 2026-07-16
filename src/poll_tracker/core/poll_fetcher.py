@@ -345,18 +345,21 @@ class PollFetcher:
         )
 
     def _parse_sample_size(self, X):
-        return X.with_columns(pl.col('sample_size').str.replace_all('\xa0', '').cast(pl.Int64, strict=False))
+        if 'sample_size' in X.columns:
+            return X.with_columns(pl.col('sample_size').str.replace_all('\xa0', '').cast(pl.Int64, strict=False))
+        else:
+            return X.with_columns(sample_size=pl.lit(None))
 
-    def _parse_date(self, X):
+    def _parse_date(self, X, year):
         return X.with_columns(
-                parse_period(pl.col('date'), year=2022, title=pl.col('title'))
+                parse_period(pl.col('date'), year=year, title=pl.col('title'))
             ).sort('end_date', descending=True)
 
     @staticmethod
     def parse_c_col(col_expr: pl.Expr) -> pl.Expr:
         return pl.struct(
             raw=col_expr,
-            processed=col_expr.str.replace(r"^<\s*", "", literal=False).str.replace(",", ".", literal=True).str.extract(r"(\d+\.?\d*)", group_index=1).cast(pl.Float64, strict=False),
+            processed=col_expr.str.replace(r"^<\s*", "", literal=False).str.replace('-', '').str.replace(",", ".", literal=True).str.extract(r"(\d+\.?\d*)", group_index=1).cast(pl.Float64, strict=False).fill_null(0.0),
             label=col_expr.str.extract(r"%\s*([A-Za-z].+)$", group_index=1).str.strip_chars(),
             sign=col_expr.str.contains(r"^<", literal=False),
         )
@@ -368,14 +371,13 @@ class PollFetcher:
                 for col in c_cols
             ).unnest(*c_cols, separator="_")
 
-    def formate(self, X):
+    def formate(self, X, year):
         # 1. Institute
         X = self._parse_source(X)
         # 2. Sample size
-        if 'sample_size' in X.columns:
-            X = self._parse_sample_size(X)
+        X = self._parse_sample_size(X)
         # 3. Date
-        X = self._parse_date(X)
+        X = self._parse_date(X, year)
         # 4. Candidates results
         X = self._parse_results(X)
         return X
@@ -402,7 +404,7 @@ class PollFetcher:
                 (pl.col(c) - pl.lit(results_row.get_column(c)[0])).alias(f"E_{c}")
                 for c in matching_cols
             ])
-        
+
         return X
 
     def fetch_polls(self, year):
@@ -422,8 +424,8 @@ class PollFetcher:
             self.concat_tour(year, table_dict,  "tour 2"),
         )
         logger.debug('Reformatting')
-        poll_dataset_t1 = self.formate(poll_dataset_t1)
-        poll_dataset_t2 = self.formate(poll_dataset_t2)
+        poll_dataset_t1 = self.formate(poll_dataset_t1, year)
+        poll_dataset_t2 = self.formate(poll_dataset_t2, year)
 
         logger.debug("Adding political groups...")
         poll_dataset_t1 = self._add_political_trend(poll_dataset_t1, year, blocs=blocs)

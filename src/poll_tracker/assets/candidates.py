@@ -796,7 +796,6 @@ candidates = {
             "Candidat LR/SL/DVD",
         ],
     },
-
     "ps_candidate": {
         "name": "Candidat PS/DVG",
         "color": "#EC407A",
@@ -825,7 +824,7 @@ election_candidates = {
         "pecresse",
         "lassalle",
         "dupont_aignan",
-        "le_pen",
+        "m_le_pen",
         "zemmour"
     ],
     "2017": [
@@ -836,7 +835,7 @@ election_candidates = {
         "lassalle",
         "fillon",
         "dupont_aignan",
-        "le_pen"
+        "m_le_pen"
     ],
     "2012": [
         "arthaud",
@@ -846,16 +845,16 @@ election_candidates = {
         "jadot",
         "sarkozy",
         "dupont_aignan",
-        "le_pen"
+        "m_le_pen"
     ]
 }
 
 second_round = {
-    "2022": ["macron", "le_pen"],
-    "2017": ["macron", "le_pen"],
+    "2022": ["macron", "m_le_pen"],
+    "2017": ["macron", "m_le_pen"],
     "2012": ["hollande", "sarkozy"],
     "2007": ["sarkozy", "royal"],
-    "2002": ["chirac", "le_pen"]
+    "2002": ["chirac", "jm_le_pen"]
 }
 
 alias_to_id = {
