@@ -24,7 +24,7 @@ INSTITUTES = {
         ]
     },
     'politico':{
-        'id':16,
+        'id': 16,
         'name': 'Politico',
         'variations': [
             'Atlas Politico'

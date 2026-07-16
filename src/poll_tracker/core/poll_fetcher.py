@@ -16,20 +16,57 @@ from poll_tracker.assets.scrapping_asset import table_selector, links
 
 RESULTATS = ['Résultats', 'Résultats officiels']
 
-def parse_period(expr: pl.Expr, year: int | pl.Expr, title: pl.Expr):
-    expr = (
+def _normalize_period(expr: pl.Expr) -> pl.Expr:
+    """Normalize a raw French date-range string into a canonical form.
+
+    Handles the many shapes seen in the source tables:
+      "12-13 avr."        -> "12-13 avril"
+      "5 avr."            -> "5 avril"
+      "28 fév. - 2 mars"  -> "28 février-2 mars"
+      "du 8 au 10"        -> "8-10"            (month recovered from title later)
+      "du 20 au 25 juin 1986" -> "20-25 juin 1986"
+      "le 20"             -> "20"
+    """
+    return (
         expr.str.to_lowercase()
-        .str.replace_all("1er", "1")
+        # Drop trailing periods on abbreviations ("avr." -> "avr") and any stray dots.
+        .str.replace_all(r"\.", " ")
+        # "1er" / "1 er" -> "1"
+        .str.replace_all(r"\b1\s*er\b", "1")
+        # Range/connector words: "du X au Y" -> "X-Y", drop "le"/"les".
+        .str.replace_all(r"\bdu\b", " ")
+        .str.replace_all(r"\bau\b", "-")
+        .str.replace_all(r"\bles?\b", " ")
+        # Expand month abbreviations to their canonical full names. Word
+        # boundaries stop these from corrupting the already-full names
+        # (e.g. "\boct\b" does not match inside "octobre").
+        .str.replace_all(r"\bjanv\b", "janvier")
+        .str.replace_all(r"\bfévr?\b", "février")
+        .str.replace_all(r"\bfevr?\b", "février")
         .str.replace_all(r"\bavr\b", "avril")
+        .str.replace_all(r"\bjuil?l?\b", "juillet")
+        .str.replace_all(r"\baout\b", "août")
+        .str.replace_all(r"\bsept\b", "septembre")
+        .str.replace_all(r"\boct\b", "octobre")
+        .str.replace_all(r"\bnov\b", "novembre")
+        .str.replace_all(r"\bdéc\b", "décembre")
+        .str.replace_all(r"\bdec\b", "décembre")
+        # Collapse separators and whitespace.
         .str.replace_all(r"\s*-\s*", "-")
         .str.replace_all(r"\s+", " ")
         .str.strip_chars()
+        .str.strip_chars("-")
     )
 
+
+def parse_period(expr: pl.Expr, year: int | pl.Expr, title: pl.Expr):
+    expr = _normalize_period(expr)
+
+    # month is optional so "8-10" / "20" (month comes from the title) still match.
     pattern = (
         r"^(?P<day1>\d{1,2})"
         r"(?:-(?P<day2>\d{1,2}))?"
-        r"\s+(?P<month>[[:alpha:]éûôàî]+)"
+        r"(?:\s+(?P<month>[[:alpha:]éûôàî]+))?"
         r"(?:-(?P<day3>\d{1,2})\s+(?P<month2>[[:alpha:]éûôàî]+))?"
         r"(?:\s+(?P<year>\d{4}))?$"
     )
@@ -42,33 +79,44 @@ def parse_period(expr: pl.Expr, year: int | pl.Expr, title: pl.Expr):
         else pl.lit(None, dtype=pl.String)
     )
 
+    month_from_title = (
+        title.str.to_lowercase().str.extract(
+            r"(janvier|février|mars|avril|mai|juin|juillet|"
+            r"août|septembre|octobre|novembre|décembre)",
+            group_index=1,
+        )
+        if title is not None
+        else pl.lit(None, dtype=pl.String)
+    )
+
     year_expr = (
         pl.coalesce(
-            parts.struct.field("year"),       
-            year_from_title,             
+            parts.struct.field("year"),
+            year_from_title,
             year if isinstance(year, pl.Expr) else pl.lit(str(year)),
         )
-        .cast(pl.Int32)
+        .cast(pl.Int32, strict=False)
     )
 
-    start_month = parts.struct.field("month").replace(MONTHS).cast(pl.Int8)
+    month1_num = parts.struct.field("month").replace_strict(MONTHS, default=None)
+    month2_num = parts.struct.field("month2").replace_strict(MONTHS, default=None)
+    title_month_num = month_from_title.replace_strict(MONTHS, default=None)
 
-    end_month = (
-        pl.when(parts.struct.field("month2").is_not_null())
-        .then(parts.struct.field("month2").replace(MONTHS))
-        .otherwise(parts.struct.field("month").replace(MONTHS))
-        .cast(pl.Int8)
+    # Fall back to the month named in the table title when the cell omits it.
+    start_month = pl.coalesce(month1_num, title_month_num).cast(pl.Int8, strict=False)
+    end_month = pl.coalesce(month2_num, month1_num, title_month_num).cast(
+        pl.Int8, strict=False
     )
 
-    start_day = parts.struct.field("day1").cast(pl.Int8)
+    start_day = parts.struct.field("day1").cast(pl.Int8, strict=False)
 
     end_day = (
-        pl.when(parts.struct.field("day3").is_not_null())
-        .then(parts.struct.field("day3"))
-        .when(parts.struct.field("day2").is_not_null())
-        .then(parts.struct.field("day2"))
-        .otherwise(parts.struct.field("day1"))
-        .cast(pl.Int8)
+        pl.coalesce(
+            parts.struct.field("day3"),
+            parts.struct.field("day2"),
+            parts.struct.field("day1"),
+        )
+        .cast(pl.Int8, strict=False)
     )
 
     return [

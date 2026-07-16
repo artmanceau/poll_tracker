@@ -1,6 +1,13 @@
 import polars as pl
 
 candidates = {
+    "abstention":{
+        'name': 'Abstention',
+        'color':'#F00000',
+        'aliases': [
+            'Abstention #'
+        ]
+    },
    "arthaud": {
         "name": "Nathalie Arthaud",
         "color": "#8B0000",  # Dark red
@@ -55,6 +62,9 @@ candidates = {
             "Ségolène Royal (PS)",
             "Royal",
             "Royal (PS)",
+            "Ségolène Royal[N 1] (PS)",
+            "Ségolène Royal",
+            "Ségolène Royal",
         ],
     },
     "bove": {
@@ -76,6 +86,7 @@ candidates = {
             "Voynet (LV)",
             "Dominique Voynet[N 1] (EELV)",
             "Dominique Voynet (Verts)"
+            "Dominique Voynet[N 1] (EELV)"
         ],
     },
     "bayrou": {
@@ -143,6 +154,7 @@ candidates = {
             "Arnaud Montebourg (PS)",
             "Arnaud Montebourg",
             "Montebourg",
+            'Arnaud Montebourg (PS)'
         ],
     },
     "peillon": {
@@ -189,15 +201,6 @@ candidates = {
             "Frédéric Nihous (CPNT)",
             "Nihous",
             "Nihous (CPNT)",
-        ],
-    },
-    "le_pen": {
-        "name": "Jean-Marie Le Pen",
-        "color": "#000080",  # Navy
-        "aliases": [
-            "Jean-Marie Le Pen (FN)",
-            "Le Pen",
-            "Le Pen (FN)",
         ],
     },
     "hուլot": {
@@ -400,7 +403,8 @@ candidates = {
             "Macron (EM)",
             "Emmanuel Macron",
             "Emmanuel Macron (SE)",
-            "Emmanuel Macron (DVG)"
+            "Emmanuel Macron (DVG)",
+            'Emmanuel Macron (EM)'
         ]
     },
     "pecresse": {
@@ -475,6 +479,9 @@ candidates = {
             "Marine Le Pen (RN)",
             "Marine Le Pen (FN)",
             "Le Pen[c] (RN)"
+            "Marine Le Pen",
+            "Le Pen[c] (RN)",
+            "Marine Le Pen"
         ]
     },
     "zemmour": {
@@ -503,7 +510,8 @@ candidates = {
         "color": "#EC407A",  # PS pink
         "aliases": [
             "Hollande",
-            "François Hollande (PS)"
+            "François Hollande (PS)",
+            "François Hollande"
         ]
     },
     "sarkozy": {
@@ -511,7 +519,9 @@ candidates = {
         "color": "#1565C0",  # UMP blue
         "aliases": [
             "Sarkozy",
-            "Nicolas Sarkozy (UMP)"
+            "Nicolas Sarkozy (UMP)",
+            "Nicolas Sarkozy",
+            'Nicolas Sarkozy (LR)'
         ]
     },
     "chirac": {
@@ -658,14 +668,14 @@ candidates = {
     },
     "candidat_ps_pp": {
         'name': 'Candidat PS/Place Publique',
-        "color":'',
+        "color":"#AD1457",
         'aliases': [
             "Candidat PS / PP"
         ]
     },
     'candidat_ens': {
         'name':"Candidat ENS",
-        'color': "",
+        'color': "#FBC02D",  # Yellow
         "aliases":[
             "Candidat ENS", 
             "Candidat ENS.1",
@@ -752,6 +762,13 @@ candidates = {
             "Hue",
         ],
     },
+    'pinel': {
+        'name': 'Sylvia Pinel',
+        'color':'#F00000',
+        'aliases':[
+            'Sylvia Pinel (PRG)'
+        ]
+    },
     "jospin": {
         "name": "Lionel Jospin",
         "color": "#E91E63",  # PS
@@ -808,11 +825,36 @@ candidates = {
         "color": "#9E9E9E",
         "aliases": [
             "Autres",
+            'Autres candidats',
         ],
     },
+    'indecis': {
+        'name': 'Indécis',
+        'color':'#F00000',
+        'aliases':[
+            'Indécis (échantillon)',
+            'Indécis'
+        ]
+    }
 }
 
 election_candidates = {
+    "2027": [
+        "candidat_ps_pp",
+        'poutou',
+        "melenchon",
+        "tondelier",
+        "faure",
+        "candidat_ens",
+        "lr_candidate",
+        "dupont_aignan",
+        "rn_candidate",
+        "zemmour",
+        "villepin",
+        "wauquiez",
+        "arthaud",
+        "others"
+    ],
     "2022": [
         "arthaud",
         "poutou",
@@ -832,6 +874,8 @@ election_candidates = {
         "poutou",
         "melenchon",
         "macron",
+        "hamon",
+        "cheminade",
         "lassalle",
         "fillon",
         "dupont_aignan",
@@ -842,11 +886,107 @@ election_candidates = {
         "poutou",
         "melenchon",
         "hollande",
-        "jadot",
+        "joly",
         "sarkozy",
         "dupont_aignan",
         "m_le_pen"
-    ]
+    ],
+    "2007": [
+          "laguiller",
+          "besancenot",
+          "buffet",
+          "schivardi",
+          "royal",
+          "bove",
+          "voynet",
+          "bayrou",
+          "nihous",
+          "sarkozy",
+          "de_villiers",
+          "jm_le_pen"
+    ],
+    "2002": [
+          "laguiller",
+          "besancenot",
+          "gluckstein",
+          "hue",
+          "jospin",
+          "mamere",
+          "taubira",
+          "chevenement",
+          "bayrou",
+          "chirac",
+          "madelin",
+          "boutin",
+          "saint_josse",
+          "lepage",
+          "megret",
+          "jm_le_pen"
+    ],
+    "1995": [
+          "laguiller",
+          "hue",
+          "jospin",
+          "voynet",
+          "chirac",
+          "balladur",
+          "de_villiers",
+          "jm_le_pen",
+          "cheminade"
+      ],
+      "1988": [
+          "laguiller",
+          "juquin",
+          "lajoinie",
+          "mitterrand",
+          "waechter",
+          "barre",
+          "chirac",
+          "jm_le_pen"
+      ],
+      "1981": [
+          "bouchardeau",
+          "laguiller",
+          "marchais",
+          "mitterrand",
+          "crepeau",
+          "lalonde",
+          "giscard_destaing",
+          "chirac",
+          "debre",
+          "garaud"
+      ],
+      "1974": [
+          "krivine",
+          "laguiller",
+          "dumont",
+          "mitterrand",
+          "muller",
+          "giscard_destaing",
+          "chaban_delmas",
+          "royer",
+          "jm_le_pen",
+          "renouvin",
+          "sebag",
+          "heraud"
+      ],
+      "1969": [
+          "krivine",
+          "duclos",
+          "defferre",
+          "rocard",
+          "poher",
+          "pompidou",
+          "ducatel"
+      ],
+      "1965": [
+          "barbu",
+          "mitterrand",
+          "marcilhacy",
+          "de_gaulle",
+          "lecanuet",
+          "tixier_vignancour"
+      ]
 }
 
 second_round = {
@@ -854,7 +994,13 @@ second_round = {
     "2017": ["macron", "m_le_pen"],
     "2012": ["hollande", "sarkozy"],
     "2007": ["sarkozy", "royal"],
-    "2002": ["chirac", "jm_le_pen"]
+    "2002": ["chirac", "jm_le_pen"],
+    "1995": ["chirac", "jospin"],
+    "1988": ["mitterrand", "chirac"],
+    "1981": ["mitterrand", "giscard_destaing"],
+    "1974": ["giscard_destaing", "mitterrand"],
+    "1969": ["pompidou", "poher"],
+    "1965": ["de_gaulle", "mitterrand"]
 }
 
 alias_to_id = {
