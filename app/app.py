@@ -6,6 +6,19 @@ from plots import (
 )
 from poll_tracker.assets.candidates import candidates, election_candidates, second_round
 from poll_tracker.assets.bloc_mapping import blocs_level_1, blocs_level_2, blocs_level_3
+import polars
+import pyarrow
+import pandas
+import numpy
+import statsmodels
+import streamlit
+
+print(polars.__version__)
+print(pyarrow.__version__)
+print(pandas.__version__)
+print(numpy.__version__)
+print(statsmodels.__version__)
+print(streamlit.__version__)
 
 storage_options = {
     "profile": "default",
@@ -32,13 +45,13 @@ def load_poll_data(
     election_type,
     tour
 ):
-    polls = (
+    data = (
         pl.read_parquet(
             f"s3://arthurmanceau/poll_tracker/data/polls/{election_type}/{year}/{tour}/polls.parquet",
             storage_options=storage_options,
         )
     )
-    return polls.filter(pl.col('source') == "Résultats"), polls.filter(pl.col('source')!="Résultats")
+    return data
 
 st.set_page_config(
     page_title="Sondages",
@@ -58,12 +71,19 @@ election_type = st.selectbox('Type d\'élection', options=["Élections présiden
 
 tour = st.selectbox('Tour', options=['Premier tour', 'Second tour'])
 
-official, polls = load_poll_data(year, CODE_ELECTION[election_type], CODE_TOUR[tour])
+data = load_poll_data(year, CODE_ELECTION[election_type], CODE_TOUR[tour])
+official, polls = data.filter(pl.col('source') == "Résultats"), polldatas.filter(pl.col('source')!="Résultats")
 
 col1, col2 = st.columns([1, 4], gap="small")
 
 with col1:
-    sondeur = st.multiselect('source', polls.unique('source').get_column('source').to_list(), default=polls.unique('source').get_column('source').to_list())
+    sources = (
+        polls["source"]
+        .unique()
+        .sort()
+        .to_list()
+    )
+    sondeur = st.multiselect('source', sources, default=sources)
     min_echantillon, max_echantillon = st.slider("Taille de l'échantillon", polls.get_column('sample_size').min(), polls.get_column('sample_size').max(), (polls.get_column('sample_size').min(), polls.get_column('sample_size').max()))
     min_date, max_date = st.slider("Date du sondage",  polls.get_column('end_date').min(), polls.get_column('end_date').max(), (polls.select(pl.col('end_date').max().dt.offset_by("-6mo")).get_column('end_date')[0], polls.get_column('end_date').max()))
     mode = st.selectbox('Mode', options=['Candidats', 'Blocs politiques'])
@@ -94,15 +114,9 @@ with col2:
     
     fig = poll_evolution_plot(
         polls.filter(
-            pl.col('source').is_in(sondeur)
-        ).filter(
-            pl.col('sample_size') <= max_echantillon
-        ).filter(
-            pl.col('sample_size') >= min_echantillon
-        ).filter(
-            pl.col('end_date') >= min_date
-        ).filter(
-            pl.col('end_date') <= max_date
+            pl.col("source").is_in(sondeur)
+            & pl.col("sample_size").is_between(min_echantillon, max_echantillon)
+            & pl.col("end_date").is_between(min_date, max_date)
         ),
         official,
         items=items,

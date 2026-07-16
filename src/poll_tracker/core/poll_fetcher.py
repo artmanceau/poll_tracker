@@ -212,6 +212,8 @@ class PollFetcher:
             # Replace [N x]
             if 'Candidat EPR.1' in data.columns:
                 data = data.drop('Candidat EPR.1')
+            if "Candidat ENS.1" in data.columns:
+                data = data.drop('Candidat ENS.1')
 
             # Remove line Sondeur, Date, Echantillon
             # Add rolling column
@@ -428,6 +430,18 @@ class PollFetcher:
 
         poll_dataset_t1 = self.add_error(poll_dataset_t1)
         poll_dataset_t2 = self.add_error(poll_dataset_t2)
+
+        # Add metadata
+        poll_dataset_t1 = poll_dataset_t1.with_columns(
+            year=pl.lit(year),
+            type=pl.lit('pres'),
+            tour=pl.lit('t1')
+        )
+        poll_dataset_t2 = poll_dataset_t2.with_columns(
+            year=pl.lit(year),
+            type=pl.lit('pres'),
+            tour=pl.lit('t2')
+        )
 
         return {'t1': poll_dataset_t1, 't2': poll_dataset_t2}
 

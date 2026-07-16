@@ -9,7 +9,7 @@ if __name__ == "__main__":
     fetcher = PollFetcher()
 
     # Load config
-    config_path = Path("config/extraction_config.json")
+    config_path = Path("config/wiki_extraction_config.json")
     with config_path.open("r", encoding="utf-8") as f:
         config = json.load(f)
 

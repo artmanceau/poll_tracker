@@ -1,0 +1,4 @@
+{
+    "base_url": "https://www.commission-des-sondages.fr",
+    "data_path":"s3://arthurmanceau/poll_tracker/cds/"
+}

@@ -20,13 +20,16 @@ def poll_evolution_plot(
     fig = go.Figure()
     colors = CANDIDATE_COLORS if mode == 'Candidats' else BLOC_COLORS
 
+    df = polls.sort("end_date").to_pandas()
+    official_pdf = official.to_pandas()
+
     for item in items:
 
-        true_score = (
-            official
-            .select(item)
-            .item()
-        )
+        if item in official.columns and official.height:
+            true_score = official[item][0]
+        else:
+            true_score = None
+
         if true_score is not None:
             fig.add_hline(
                 y=true_score,
@@ -37,26 +40,12 @@ def poll_evolution_plot(
                 annotation_position="bottom right"
             )
 
-        pdf = (
-            polls
-            .select(
-                    [
-                        "end_date",
-                        "sample_size",
-                        "source",
-                        'source_link',
-                        item
-                    ]
-            )
-            .drop_nulls()
-            .to_pandas()
-            .sort_values("end_date")
-        )
-
+        pdf = df[
+                ["end_date", "sample_size", "source", "source_link", item]
+            ].dropna()
 
         if pdf.empty:
             continue
-
 
         pdf["date_num"] = (
             pd.to_datetime(
@@ -68,29 +57,30 @@ def poll_evolution_plot(
                 )
             )
 
-        smooth = lowess(
-                endog=pdf[item],
-                exog=pdf["date_num"],
-                frac=0.25,
-        )
+        if len(df) >= 3:
+            smooth = lowess(
+                    endog=pdf[item],
+                    exog=pdf["date_num"],
+                    frac=0.25,
+            )
 
-        fig.add_trace(
-                go.Scatter(
-                    x=pd.to_datetime(
-                        smooth[:,0],
-                        unit="s",
-                    ),
-                    y=smooth[:,1],
-                    mode="lines",
-                    name=item,
-                    line=dict(
-                        color=colors[item],
-                        width=3,
-                    ),
-                    hoverinfo="skip",
-                    showlegend=True,
-                )
-        )
+            fig.add_trace(
+                    go.Scatter(
+                        x=pd.to_datetime(
+                            smooth[:,0],
+                            unit="s",
+                        ),
+                        y=smooth[:,1],
+                        mode="lines",
+                        name=item,
+                        line=dict(
+                            color=colors[item],
+                            width=3,
+                        ),
+                        hoverinfo="skip",
+                        showlegend=False,
+                    )
+            )
 
 
         fig.add_trace(
@@ -113,24 +103,19 @@ def poll_evolution_plot(
                             upper=20,
                         ),
                     ),
-                    customdata=np.stack(
-                        [
-                            pdf["source"],
-                            pdf["sample_size"],
-                            pdf["source_link"],
-                        ],
-                        axis=1,
-                    ),
+                    customdata=df[
+                        ["source", "sample_size", "source_link"]
+                    ].to_numpy(),
                     hovertemplate=(
                         "%{x|%d %b %Y}<br>"
-                        "Element: {name}"
+                        "Element: %{name}"
                         "Value: %{y:.1f}%<br>"
                         "Source: %{customdata[0]}<br>"
                         "Sample size: %{customdata[1]}<br>"
                         "<a href='%{customdata[2]}'>Source link</a>"
                         "<extra></extra>"
                     ),
-                    showlegend=False,
+                    showlegend=True,
                 )
         )
 
