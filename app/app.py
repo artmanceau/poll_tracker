@@ -15,7 +15,13 @@ storage_options = {
 }
 
 # TODO
-# Segmentation faukt
+# Hoovering
+# Blocs colors
+# 2027 —> Keep track of indicated precision to show in the UI
+# Multiple second tour
+# Resultats 1995, 1988
+# Previous election
+# + deploy
 
 fs = s3fs.S3FileSystem(
     profile="default",
@@ -112,6 +118,7 @@ with col1:
         else:
             min_date, max_date = d_lo, d_hi
     mode = st.selectbox('Mode', options=['Candidats', 'Blocs politiques'] if (tour == 'Premier tour') else ['Candidats'])
+    
     if (mode == 'Candidats') and (tour == 'Premier tour'):
         if official.height > 0:
             remove_below_5 = st.checkbox('Retirer les candidats avec moins de 5%', value=True)
@@ -133,10 +140,10 @@ with col1:
         else:
             items = [f'C_{candidate}_processed' for candidate in election_candidates[str(year)]]
 
-    else:
+    elif (mode == 'Candidats') and (tour == 'Second tour'):
         items = [f'C_{candidate}_processed' for candidate in second_round[str(year)]]
 
-    if mode == 'Blocs politiques':
+    elif mode == 'Blocs politiques':
         blocs = st.radio('Division', options=[blocs_level_1, blocs_level_2, blocs_level_3])
         items = [f'BP_{b}' for b in blocs]
 

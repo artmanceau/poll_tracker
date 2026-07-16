@@ -64,20 +64,20 @@ blocs = {
 
 BLOC_COLORS = {
     # Level 1
-    "G": "#2E7D32",      # Green
-    "CG": "#D32F2F",     # Red / Centre-left
+    "G": "#E53935",      # Red
+    "CG": "#E91E63",    #  Centre-left
     "C": "#FBC02D",      # Yellow
     "CD": "#1976D2",     # Blue / Centre-right
     "D": "#0D47A1",      # Dark blue
 
     # Level 2
-    "GCG": "#8E24AA",    # Purple (Left coalition)
-    "C": "#FBC02D",
+    "GCG": "#E91E63",   # Red (Left coalition)
+    "C": "#FBC02D", 
     "DCD": "#1565C0",    # Medium-dark blue (Right coalition)
 
     # Level 3
-    "TG": "#1B5E20",     # Dark green (Entire left)
-    "TD": "#002171",     # Navy (Entire right)
+    "TG":"#E91E63",   # Dark green (Entire left)
+    "TD": "#1976D2",          # Navy (Entire right)
 }
 
 blocs_level_1 = ["G", "CG", "CD", "C", "D"]
