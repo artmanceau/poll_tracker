@@ -26,16 +26,23 @@ def _normalize_period(expr: pl.Expr) -> pl.Expr:
       "du 8 au 10"        -> "8-10"            (month recovered from title later)
       "du 20 au 25 juin 1986" -> "20-25 juin 1986"
       "le 20"             -> "20"
+      "11–16 mai 1987"    -> "11-16 mai 1987"  (Unicode en/em dashes)
+      "14 et 15 avril"    -> "14-15 avril"     ("et" connector)
+      "28 février–1er mars 1995" -> "28 février-1 mars 1995"
     """
     return (
         expr.str.to_lowercase()
+        # Normalize Unicode dashes (en/em/figure dash, minus sign) to ASCII "-".
+        .str.replace_all(r"[‒–—―−]", "-")
         # Drop trailing periods on abbreviations ("avr." -> "avr") and any stray dots.
         .str.replace_all(r"\.", " ")
         # "1er" / "1 er" -> "1"
         .str.replace_all(r"\b1\s*er\b", "1")
-        # Range/connector words: "du X au Y" -> "X-Y", drop "le"/"les".
+        # Range/connector words: "du X au Y" -> "X-Y", "X et Y" -> "X-Y",
+        # drop "le"/"les".
         .str.replace_all(r"\bdu\b", " ")
         .str.replace_all(r"\bau\b", "-")
+        .str.replace_all(r"\bet\b", "-")
         .str.replace_all(r"\bles?\b", " ")
         # Expand month abbreviations to their canonical full names. Word
         # boundaries stop these from corrupting the already-full names

@@ -27,3 +27,12 @@ sondage_id  |  election |   nom du sondage (pas normé) (essayer d'extraires des
 -> Parsing des dates
 
 -> Mapping politiques avec les blocs et les candidats id
+
+# TODO
+# Hoovering (...)
+# Events (...)
+# 2027 —> Keep track of indicated precision to show in the UI (multiple sondages??) (...)
+# Multiple second tour hyp TODO
+
+# Resultats 1995, 1988 (?)
+# Previous election (?) 1981, 1974, 1969, 1965

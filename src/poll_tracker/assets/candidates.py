@@ -5,7 +5,9 @@ candidates = {
         'name': 'Abstention',
         'color':'#F00000',
         'aliases': [
-            'Abstention #'
+            'Abstention #',
+            'Abstention, blanc ou nul',
+            'Abstention'
         ]
     },
    "arthaud": {
@@ -86,7 +88,8 @@ candidates = {
             "Voynet (LV)",
             "Dominique Voynet[N 1] (EELV)",
             "Dominique Voynet (Verts)"
-            "Dominique Voynet[N 1] (EELV)"
+            "Dominique Voynet[N 1] (EELV)",
+            'Dominique Voynet[N 1] (EELV)'
         ],
     },
     "bayrou": {
@@ -145,6 +148,7 @@ candidates = {
             "Alain Juppe (LR)",
             "Alain Juppé",
             "Juppé",
+            'Alain Juppé (UMP)'
         ],
     },
     "montebourg": {
@@ -381,7 +385,15 @@ candidates = {
         "aliases": [
             "Hidalgo",
             "Hidalgo (PS)",
-            "Anne Hidalgo (PS)"
+            "Anne Hidalgo (PS)",
+            'Hidalgo[N 5] (PS)'
+        ]
+    },
+    "glucksmann": {
+        "name": "Raphaël Glucksmann",
+        "color": "#FED92D",  # Socialist pink
+        "aliases": [
+            'Glucksmann (PP)',
         ]
     },
     "jadot": {
@@ -391,7 +403,9 @@ candidates = {
             "Jadot",
             "Jadot (EÉLV)",
             "Jadot (EELV)",
-            "Yannick Jadot (EELV)"
+            "Yannick Jadot (EELV)",
+            'Jadot[N 5] (EELV)'
+
         ]
     },
     "macron": {
@@ -407,6 +421,20 @@ candidates = {
             'Emmanuel Macron (EM)'
         ]
     },
+    "attal": {
+        "name": "Gabriel Attal",
+        "color": "#FBC02D",  # Yellow
+        "aliases": [
+            'Attal (RE)',
+        ]
+    },
+    "philippe": {
+        "name": "Edouard Philippe",
+        "color": "#1E88E5",
+        "aliases": [
+           'Philippe (HOR)'
+        ]
+    },
     "pecresse": {
         "name": "Valérie Pécresse",
         "color": "#1E88E5",  # Centre-right blue
@@ -414,6 +442,13 @@ candidates = {
             "Pécresse",
             "Pécresse (LR)",
             "Valérie Pécresse (LR)"
+        ]
+    },
+    "retailleau": {
+        "name": "Bruno Retailleau",
+        "color": "#1E88E5",  # Centre-right blue
+        "aliases": [
+            'Retailleau (LR)'
         ]
     },
     "lassalle": {
@@ -469,6 +504,13 @@ candidates = {
             "Jean-Marie Le Pen (FN)"
         ]
     },
+    'bardella': {
+        "name": 'Jordan Bardella',
+        "color": "#0D47A1",  # Navy blue
+        "aliases": [
+            'Bardella (RN)'
+        ]
+    },
     "m_le_pen": {
         "name": "Marine Le Pen",
         "color": "#0D47A1",  # Navy blue
@@ -491,7 +533,8 @@ candidates = {
             "Zemmour",
             "Zemmour (REC)",
             "Éric Zemmour (REC)",
-            "Zemmour[c] (REC)"
+            "Zemmour[c] (REC)",
+            'Zemmour (EXD)'
         ]
     },
     "fillon": {
@@ -530,7 +573,7 @@ candidates = {
         "aliases": [
             "Chirac",
             "Jacques Chirac (RPR)",
-            "Jacques Chirac "
+            "Jacques Chirac"
         ]
     },
     "lajoinie": {
@@ -690,6 +733,7 @@ candidates = {
             "Montebourg",
             "Arnaud Montebourg",
             "Montebourg (DVG)",
+            'Arnaud Montebourg (PS)'
         ],
     },
     "asselineau": {
@@ -990,6 +1034,7 @@ election_candidates = {
 }
 
 second_round = {
+    "2027": ["attal", "bardella"],
     "2022": ["macron", "m_le_pen"],
     "2017": ["macron", "m_le_pen"],
     "2012": ["hollande", "sarkozy"],

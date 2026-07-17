@@ -28,10 +28,12 @@ INSTITUTES = {
             "TNS Sofres",
             "Kantar Sofres - OnePoint",
             "Kantar Sofres-OnePoint"
-            "Kantar\xa0Sofres - OnePoint"
+            "Kantar\xa0Sofres - OnePoint",
+            'Kantar Sofres-OnePoint',
+            "Kantar Sofres",
         ]
     },
-    'politico':{
+    'politico': {
         'id': 16,
         'name': 'Politico',
         'variations': [
@@ -84,7 +86,8 @@ INSTITUTES = {
             "Cevipof Ipsos Sopra Steria",
             "Ipsos Sopra Steria",
             '«\xa0Ipsos\xa0»(Archive.org • Wikiwix • Google • Que faire\xa0?)',
-            "Ipsos\xa0Sopra\xa0Steria"
+            "Ipsos\xa0Sopra\xa0Steria",
+            "Cevipof Ipsos-Sopra Steria"
         ],
     },
     "bva": {

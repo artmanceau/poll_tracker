@@ -83,3 +83,16 @@ BLOC_COLORS = {
 blocs_level_1 = ["G", "CG", "CD", "C", "D"]
 blocs_level_2 = ["GCG", "DCD", "C"]
 blocs_level_3 = ["TG", "TD"]
+
+BLOC_NAME = {
+    'TD': 'Toutes les forces politiques de droite',
+    'TG': 'Toutes les forces politiques de gauche',
+    'D' : 'Extrême droite',
+    'CD': 'Droite',
+    'C': 'Centre',
+    'CG' : "Gauche",
+    'G': 'Extrême gauche',
+    'GCG' : 'Bloc de gauche',
+    'DCD' : 'Bloc de droite',
+    'C' : 'Bloc centriste'
+}
