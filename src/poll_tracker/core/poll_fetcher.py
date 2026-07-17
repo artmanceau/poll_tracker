@@ -415,7 +415,7 @@ class PollFetcher:
         return pl.struct(
             raw=col_expr,
             processed=col_expr.str.replace(r"^<\s*", "", literal=False).str.replace('-', '').str.replace(",", ".", literal=True).str.extract(r"(\d+\.?\d*)", group_index=1).cast(pl.Float64, strict=False).fill_null(0.0),
-            label=col_expr.str.extract(r"%\s*([A-Za-z].+)$", group_index=1).str.strip_chars(),
+            label=col_expr.str.extract(r"^[<>~\s]*[\d.,]+\s*%?\s*(\p{L}.*)$", group_index=1).str.strip_chars(),
             sign=col_expr.str.contains(r"^<", literal=False),
         )
 
