@@ -13,14 +13,22 @@ INSTITUTES = {
         "variations": [
             "HARRIS INTERACTIVE",
             "HARRIS",
-            "Harris Interractive"
+            "Harris Interractive",
+            "Louis Harris",
+            "Harris-Interactive",
+            "Harris[g]"
         ],
     },
     "kantar": {
         'id': 15,
         'name': 'Kantar',
         "variations": [
-            'Kantar'
+            'Kantar',
+            'Sofres',
+            "TNS Sofres",
+            "Kantar Sofres - OnePoint",
+            "Kantar Sofres-OnePoint"
+            "Kantar\xa0Sofres - OnePoint"
         ]
     },
     'politico':{
@@ -44,6 +52,7 @@ INSTITUTES = {
         "variations": [
             "CLUSTER17",
             "CLUSTER 17",
+            "Cluster17[m]"
         ],
     },
     "ifop": {
@@ -51,6 +60,10 @@ INSTITUTES = {
         "name": "IFOP",
         "variations": [
             "IFOP",
+            "Ifop[2]",
+            "Ifop[3]",
+            "Ifop-Fiducial",
+            "Ifop[f]"
         ],
     },
     "elabe": {
@@ -65,6 +78,13 @@ INSTITUTES = {
         "name": "IPSOS",
         "variations": [
             "IPSOS",
+            "Ipsos[1]",
+            "Ispos",
+            "Cevipof Ipsos Sopra Steria",
+            "Cevipof Ipsos Sopra Steria",
+            "Ipsos Sopra Steria",
+            '«\xa0Ipsos\xa0»(Archive.org • Wikiwix • Google • Que faire\xa0?)',
+            "Ipsos\xa0Sopra\xa0Steria"
         ],
     },
     "bva": {
@@ -124,6 +144,34 @@ INSTITUTES = {
             "PIGÉ",
         ],
     },
+    "lh2": {
+        'id':18,
+        'name': 'LH2',
+        'variations': [
+            'LH2',
+        ]
+    },
+    "scan_research": {
+        'id':19,
+        'name': 'Scan Research',
+        'variations': [
+            'Scan Research - Le Terrain',
+        ]
+    },
+    "dedicated_research": {
+        'id':19,
+        'name': 'Dedicated Research',
+        'variations': [
+            'Dedicated Research',
+        ]
+    },
+     "future_thinking": {
+        'id':20,
+        'name': 'Future Thinking',
+        'variations': [
+            'Future Thinking - SSI',
+        ]
+    }
 }
 
 INSTITUTE_LOOKUP = {

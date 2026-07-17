@@ -436,7 +436,7 @@ candidates = {
         ]
     },
     "mamere": {
-        "name": "Noël Mamère (LV)",
+        "name": "Noël Mamère",
         "color": "#43A047",  # Green
         "aliases": [
             "Noël Mamère (LV)"

@@ -16,9 +16,9 @@ storage_options = {
 
 # TODO
 # Hoovering
-# Blocs colors
-# 2027 —> Keep track of indicated precision to show in the UI
-# Multiple second tour
+# Events
+# 2027 —> Keep track of indicated precision to show in the UI (multiple sondages??)
+# Multiple second tour hyp
 # Resultats 1995, 1988
 # Previous election
 # + deploy
