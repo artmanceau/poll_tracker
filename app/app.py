@@ -3,6 +3,7 @@
 Layout: a top row of dataset selectors (year / election / round), then two
 columns — filters on the left, the plotly chart on the right.
 """
+
 import polars as pl
 import streamlit as st
 from plots import poll_evolution_plot
@@ -15,7 +16,7 @@ from poll_tracker.assets.bloc_mapping import (
     blocs_level_1_str,
     blocs_level_2_str,
     blocs_level_3_str,
-    bloc_level_mapping
+    bloc_level_mapping,
 )
 
 
@@ -48,12 +49,11 @@ MIN_SCORE_PCT = 5  # threshold for the "remove candidates below 5%" filter
 
 # --- Data loading ---------------------------------------------------------
 
+
 @st.cache_data
 def load_poll_data(year, election, tour):
     uri = POLL_URI.format(election=election, year=year, tour=tour)
-    return pl.read_parquet(
-        uri, storage_options=STORAGE_OPTIONS
-    )
+    return pl.read_parquet(uri, storage_options=STORAGE_OPTIONS)
 
 
 @st.cache_data
@@ -70,19 +70,15 @@ def load_events(election: str, year: int, date_range) -> pl.DataFrame:
     )
 
     df = pl.read_parquet(
-            EVENTS_URI.format(election=election, year=year),
-            storage_options=STORAGE_OPTIONS
+        EVENTS_URI.format(election=election, year=year), storage_options=STORAGE_OPTIONS
     )
 
     if df.height == 0:
         return empty
 
     return (
-        df.with_columns(
-            pl.col("event_date").str.to_date()
-        ).filter(
-            (pl.col('event_date') > start_date) & (pl.col('event_date')<end_date)
-        )
+        df.with_columns(pl.col("event_date").str.to_date())
+        .filter((pl.col("event_date") > start_date) & (pl.col("event_date") < end_date))
         .select("event_name", "event_date")
     )
 
@@ -101,6 +97,7 @@ def has_sample_size(polls):
 
 
 # --- Controls (rendered inside the left column) ---------------------------
+
 
 def select_dataset():
     """Top-row selectors. Returns (year, election_label, tour_label)."""
@@ -154,7 +151,10 @@ def select_mode(tour):
 def select_items(mode, tour, year, polls, official):
     """The candidate/bloc columns to plot, per the chosen mode and round."""
     if mode == MODE_BLOCS:
-        blocs = st.radio("Division", options=[blocs_level_1_str, blocs_level_2_str, blocs_level_3_str])
+        blocs = st.radio(
+            "Division",
+            options=[blocs_level_1_str, blocs_level_2_str, blocs_level_3_str],
+        )
         return [f"BP_{b}" for b in bloc_level_mapping[str(blocs)]]
     if tour == "Second tour":
         return _candidate_columns(_known_candidates(second_round, year))
@@ -214,6 +214,7 @@ def build_poll_filter(sources, date_range, sample_range):
 
 
 # --- Rendering ------------------------------------------------------------
+
 
 def render_source_link(event):
     """A plotly tooltip can't be clicked, so turn a clicked marker into a link."""

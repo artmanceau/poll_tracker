@@ -11,10 +11,16 @@ from poll_tracker.assets.candidates import alias_to_id
 from poll_tracker.assets.date_utils import MONTHS
 from poll_tracker.assets.polling_institute import INSTITUTE_LOOKUP
 import polars.selectors as cs
-from poll_tracker.assets.bloc_mapping import blocs, blocs_level_1, blocs_level_2, blocs_level_3
+from poll_tracker.assets.bloc_mapping import (
+    blocs,
+    blocs_level_1,
+    blocs_level_2,
+    blocs_level_3,
+)
 from poll_tracker.assets.scrapping_asset import table_selector, links
 
-RESULTATS = ['Résultats', 'Résultats officiels']
+RESULTATS = ["Résultats", "Résultats officiels"]
+
 
 def _normalize_period(expr: pl.Expr) -> pl.Expr:
     """Normalize a raw French date-range string into a canonical form.
@@ -96,14 +102,11 @@ def parse_period(expr: pl.Expr, year: int | pl.Expr, title: pl.Expr):
         else pl.lit(None, dtype=pl.String)
     )
 
-    year_expr = (
-        pl.coalesce(
-            parts.struct.field("year"),
-            year_from_title,
-            year if isinstance(year, pl.Expr) else pl.lit(str(year)),
-        )
-        .cast(pl.Int32, strict=False)
-    )
+    year_expr = pl.coalesce(
+        parts.struct.field("year"),
+        year_from_title,
+        year if isinstance(year, pl.Expr) else pl.lit(str(year)),
+    ).cast(pl.Int32, strict=False)
 
     month1_num = parts.struct.field("month").replace_strict(MONTHS, default=None)
     month2_num = parts.struct.field("month2").replace_strict(MONTHS, default=None)
@@ -117,14 +120,11 @@ def parse_period(expr: pl.Expr, year: int | pl.Expr, title: pl.Expr):
 
     start_day = parts.struct.field("day1").cast(pl.Int8, strict=False)
 
-    end_day = (
-        pl.coalesce(
-            parts.struct.field("day3"),
-            parts.struct.field("day2"),
-            parts.struct.field("day1"),
-        )
-        .cast(pl.Int8, strict=False)
-    )
+    end_day = pl.coalesce(
+        parts.struct.field("day3"),
+        parts.struct.field("day2"),
+        parts.struct.field("day1"),
+    ).cast(pl.Int8, strict=False)
 
     return [
         pl.date(year_expr, start_month, start_day).alias("start_date"),
@@ -133,46 +133,47 @@ def parse_period(expr: pl.Expr, year: int | pl.Expr, title: pl.Expr):
 
 
 class PollFetcher:
-
     def __init__(self):
         self.headers = {"User-Agent": "PollFetcher/1.0 (contact@example.com)"}
         self.events = []
 
     @staticmethod
     def _normalize_one_col(col, idx):
-                # Case 1: actual tuple column, e.g. ('Sondeur', None)
-                if isinstance(col, tuple):
-                    name = col[0]
+        # Case 1: actual tuple column, e.g. ('Sondeur', None)
+        if isinstance(col, tuple):
+            name = col[0]
 
-                # Case 2: stringified tuple, possibly with suffix, e.g. "('', None).3"
-                elif isinstance(col, str):
-                    m = re.match(r"^(.*?)(\.\d+)?$", col)
-                    raw = m.group(1)
-                    suffix = m.group(2) or ""
+        # Case 2: stringified tuple, possibly with suffix, e.g. "('', None).3"
+        elif isinstance(col, str):
+            m = re.match(r"^(.*?)(\.\d+)?$", col)
+            raw = m.group(1)
+            suffix = m.group(2) or ""
 
-                    try:
-                        parsed = ast.literal_eval(raw)
-                        if isinstance(parsed, tuple):
-                            name = parsed[0]
-                        else:
-                            name = raw
-                    except Exception:
-                        name = raw
-
-                    name = (name or "").strip()
-                    if not name:
-                        name = f"col_{idx}"
-                    return f"{name}{suffix}"
-
+            try:
+                parsed = ast.literal_eval(raw)
+                if isinstance(parsed, tuple):
+                    name = parsed[0]
                 else:
-                    name = str(col)
+                    name = raw
+            except Exception:
+                name = raw
 
-                name = (name or "").strip()
-                return name if name else f"col_{idx}"
+            name = (name or "").strip()
+            if not name:
+                name = f"col_{idx}"
+            return f"{name}{suffix}"
+
+        else:
+            name = str(col)
+
+        name = (name or "").strip()
+        return name if name else f"col_{idx}"
 
     @staticmethod
     def normalize_columns(columns):
-        cleaned = [PollFetcher._normalize_one_col(col, i) for i, col in enumerate(columns)]
+        cleaned = [
+            PollFetcher._normalize_one_col(col, i) for i, col in enumerate(columns)
+        ]
         seen = {}
         out = []
 
@@ -196,20 +197,16 @@ class PollFetcher:
 
         # 2. Tables is the table content already parsed by beautiful soup
         tables = pd.read_html(
-            StringIO(html),
-            skiprows=[0],
-            header=0,
-            extract_links="body"
+            StringIO(html), skiprows=[0], header=0, extract_links="body"
         )
         # 3. We collect the additional html info (title and position in page)
         soup_tables = BeautifulSoup(html, "lxml").find_all("table")
         return tables, soup_tables
 
     def parse_page(self, tables, soup_tables):
-        """"Create a clean parsed dict with the table and all the info needed"""
+        """ "Create a clean parsed dict with the table and all the info needed"""
         table_dict = {}
         for idx, (df, tag) in enumerate(zip(tables, soup_tables), start=1):
-
             # 1. titre de la table : <caption>
             caption = tag.find("caption")
             if caption and caption.get_text(strip=True):
@@ -239,7 +236,9 @@ class PollFetcher:
             # 2) Unnest link/elements
             for col in df.columns:
                 if df[col].map(lambda x: isinstance(x, tuple)).any():
-                    df[f"{col}_href"] = df[col].map(lambda x: x[1] if isinstance(x, tuple) else None)
+                    df[f"{col}_href"] = df[col].map(
+                        lambda x: x[1] if isinstance(x, tuple) else None
+                    )
                     df[col] = df[col].map(lambda x: x[0] if isinstance(x, tuple) else x)
 
             # Drop rows with only missing values
@@ -254,7 +253,7 @@ class PollFetcher:
 
             # Convert to polars
             data = pl.from_pandas(df)
-            
+
             # Normalize columns names
             # Date, Dates -> date
             # Sondeur -> source
@@ -265,35 +264,39 @@ class PollFetcher:
             # Drop href
 
             # Replace [N x]
-            if 'Candidat EPR.1' in data.columns:
-                data = data.drop('Candidat EPR.1')
+            if "Candidat EPR.1" in data.columns:
+                data = data.drop("Candidat EPR.1")
             if "Candidat ENS.1" in data.columns:
-                data = data.drop('Candidat ENS.1')
+                data = data.drop("Candidat ENS.1")
 
             # Remove line Sondeur, Date, Echantillon
             # Add rolling column
-            data = data.rename({
-                    'Sondeur': 'source',
-                    'Sondeur_href': 'source_link',
-                    'Date': 'date',
-                    "Dernier jour du sondage": 'date',
-                    'Dates': 'date',
-                    'Échantillon': 'sample_size'},
-                    strict=False
-                ).rename({
-                    col: alias_to_id.get(col.lower(), col)
-                    for col in data.columns
-                }).with_columns(
-                    pl.lit(key).alias('title'),
-                ).drop(
-                    cs.contains("href")
-                ).with_columns(
+            data = (
+                data.rename(
+                    {
+                        "Sondeur": "source",
+                        "Sondeur_href": "source_link",
+                        "Date": "date",
+                        "Dernier jour du sondage": "date",
+                        "Dates": "date",
+                        "Échantillon": "sample_size",
+                    },
+                    strict=False,
+                )
+                .rename(
+                    {col: alias_to_id.get(col.lower(), col) for col in data.columns}
+                )
+                .with_columns(
+                    pl.lit(key).alias("title"),
+                )
+                .drop(cs.contains("href"))
+                .with_columns(
                     cs.string().str.replace_all(r"\[N \d+\]", ""),
+                )
             )
-            
 
-            if 'source' in data.columns: 
-                data = data.filter(pl.col('source') != 'Sondeur')
+            if "source" in data.columns:
+                data = data.filter(pl.col("source") != "Sondeur")
 
             table_dict[key] = data
 
@@ -305,35 +308,39 @@ class PollFetcher:
         delta = df.select(
             ((100 - row_sums_expr) / len(blocs)).alias("delta")
         ).get_column("delta")
-        return df.with_columns([
-            (pl.col(f"BR_{b}") + pl.lit(delta)).alias(f'BP_{b}')
-            for b in blocs
-        ])
+        return df.with_columns(
+            [(pl.col(f"BR_{b}") + pl.lit(delta)).alias(f"BP_{b}") for b in blocs]
+        )
 
     def _add_political_trend(self, X, year, blocs):
         bloc = blocs[year]
-        X = X.with_columns(
+        X = (
+            X.with_columns(
                 all_scores_candidates_sum=pl.sum_horizontal(
                     cs.starts_with("C_") & cs.ends_with("_processed")
                 )
-            ).with_columns([
-                pl.sum_horizontal([
-                    pl.col(f"C_{candidate}_processed")
-                    for candidate in candidates
-                ]).alias(f"BR_{b}")
-                for b, candidates in bloc.items()
-            ]).with_columns(
+            )
+            .with_columns(
+                [
+                    pl.sum_horizontal(
+                        [pl.col(f"C_{candidate}_processed") for candidate in candidates]
+                    ).alias(f"BR_{b}")
+                    for b, candidates in bloc.items()
+                ]
+            )
+            .with_columns(
                 BR_GCG=(pl.col("BR_G") + pl.col("BR_CG")).round(2),
                 BR_DCD=(pl.col("BR_D") + pl.col("BR_CD")).round(2),
                 BR_CGCCD=(pl.col("BR_CG") + pl.col("BR_C") + pl.col("BR_CD")).round(2),
                 BR_TG=(pl.col("BR_G") + pl.col("BR_CG") + pl.col("BR_C") / 2).round(2),
                 BR_TD=(pl.col("BR_D") + pl.col("BR_CD") + pl.col("BR_C") / 2).round(2),
-            ).with_columns(
+            )
+            .with_columns(
                 all_scores_bloc_sum=pl.sum_horizontal(
-                    [pl.col(f'BR_{b}') for b in bloc.keys()]
+                    [pl.col(f"BR_{b}") for b in bloc.keys()]
                 )
-            ).with_columns(
-                missing=100 - pl.col('all_scores_bloc_sum')
+            )
+            .with_columns(missing=100 - pl.col("all_scores_bloc_sum"))
         )
 
         for blocs_levels in [blocs_level_1, blocs_level_2, blocs_level_3]:
@@ -356,9 +363,7 @@ class PollFetcher:
         )
         # Final assertions
         for blocs in [blocs_level_1, blocs_level_2, blocs_level_3]:
-            mean = X.select(
-                pl.sum_horizontal([f"BP_{b}" for b in blocs]).mean()
-            ).item()
+            mean = X.select(pl.sum_horizontal([f"BP_{b}" for b in blocs]).mean()).item()
             assert np.isclose(mean, 100), f"mean {mean} not close to 100"
 
         return X
@@ -387,44 +392,59 @@ class PollFetcher:
         return pl.concat(frames, how="diagonal_relaxed")
 
     def _parse_source(self, X):
-        return X.with_columns(
-            source_raw=pl.col('source')
-        ).with_columns(
-            pl.col("source").str.contains("(rolling)", literal=True).alias("rolling"),
-            pl.col("source").str.replace_all("(rolling)", "", literal=True).str.strip_chars()
-        ).with_columns(
-            pl.col("source")
-            .str.to_uppercase()
-            .replace_strict(INSTITUTE_LOOKUP, default=None)
-            .alias("source")
+        return (
+            X.with_columns(source_raw=pl.col("source"))
+            .with_columns(
+                pl.col("source")
+                .str.contains("(rolling)", literal=True)
+                .alias("rolling"),
+                pl.col("source")
+                .str.replace_all("(rolling)", "", literal=True)
+                .str.strip_chars(),
+            )
+            .with_columns(
+                pl.col("source")
+                .str.to_uppercase()
+                .replace_strict(INSTITUTE_LOOKUP, default=None)
+                .alias("source")
+            )
         )
 
     def _parse_sample_size(self, X):
-        if 'sample_size' in X.columns:
-            return X.with_columns(pl.col('sample_size').str.replace_all('\xa0', '').cast(pl.Int64, strict=False))
+        if "sample_size" in X.columns:
+            return X.with_columns(
+                pl.col("sample_size")
+                .str.replace_all("\xa0", "")
+                .cast(pl.Int64, strict=False)
+            )
         else:
             return X.with_columns(sample_size=pl.lit(None))
 
     def _parse_date(self, X, year):
         return X.with_columns(
-                parse_period(pl.col('date'), year=year, title=pl.col('title'))
-            ).sort('end_date', descending=True)
+            parse_period(pl.col("date"), year=year, title=pl.col("title"))
+        ).sort("end_date", descending=True)
 
     @staticmethod
     def parse_c_col(col_expr: pl.Expr) -> pl.Expr:
         return pl.struct(
             raw=col_expr,
-            processed=col_expr.str.replace(r"^<\s*", "", literal=False).str.replace('-', '').str.replace(",", ".", literal=True).str.extract(r"(\d+\.?\d*)", group_index=1).cast(pl.Float64, strict=False),
-            label=col_expr.str.extract(r"^[<>~\s]*[\d.,]+\s*%?\s*(\p{L}.*)$", group_index=1).str.strip_chars(),
+            processed=col_expr.str.replace(r"^<\s*", "", literal=False)
+            .str.replace("-", "")
+            .str.replace(",", ".", literal=True)
+            .str.extract(r"(\d+\.?\d*)", group_index=1)
+            .cast(pl.Float64, strict=False),
+            label=col_expr.str.extract(
+                r"^[<>~\s]*[\d.,]+\s*%?\s*(\p{L}.*)$", group_index=1
+            ).str.strip_chars(),
             sign=col_expr.str.contains(r"^<", literal=False),
         )
 
     def _parse_results(self, X):
         c_cols = X.select(cs.starts_with("C_")).columns
         return X.with_columns(
-                self.parse_c_col(pl.col(col)).alias(col)
-                for col in c_cols
-            ).unnest(*c_cols, separator="_")
+            self.parse_c_col(pl.col(col)).alias(col) for col in c_cols
+        ).unnest(*c_cols, separator="_")
 
     def formate(self, X, year):
         # 1. Institute
@@ -439,26 +459,23 @@ class PollFetcher:
 
     def add_error(self, X):
         # 1. Select all cols starting with C_, BR_, BP_
-        score_cols = (
-            cs.starts_with("BR_", "BP_")
-            | (cs.starts_with("C_") & cs.ends_with("_processed"))
+        score_cols = cs.starts_with("BR_", "BP_") | (
+            cs.starts_with("C_") & cs.ends_with("_processed")
         )
 
         # 2. Extract the results row as a reference Series per column
-        results_row = (
-            X
-            .filter(pl.col('source').is_in(RESULTATS))
-            .select(score_cols)
-        )
+        results_row = X.filter(pl.col("source").is_in(RESULTATS)).select(score_cols)
 
         # 3. Compute error columns (difference with results row) for each matching col
         matching_cols = X.select(score_cols).columns
 
         if results_row.height > 0:
-            X = X.with_columns([
-                (pl.col(c) - pl.lit(results_row.get_column(c)[0])).alias(f"E_{c}")
-                for c in matching_cols
-            ])
+            X = X.with_columns(
+                [
+                    (pl.col(c) - pl.lit(results_row.get_column(c)[0])).alias(f"E_{c}")
+                    for c in matching_cols
+                ]
+            )
 
         return X
 
@@ -467,18 +484,18 @@ class PollFetcher:
         logger.info(f"Getting poll data for year: {year}")
 
         # Fetch all tables from page
-        logger.debug('Fetching from wikipedia')
+        logger.debug("Fetching from wikipedia")
         wikipedia_page_url = links[year]
         tables, soup_tables = self.fetch_page(wikipedia_page_url)
         table_dict = self.parse_page(tables, soup_tables)
         # Instantiate the datasets
-        logger.debug('Concat all tables')
+        logger.debug("Concat all tables")
 
         poll_dataset_t1, poll_dataset_t2 = (
-            self.concat_tour(year, table_dict,  "tour 1"),
-            self.concat_tour(year, table_dict,  "tour 2"),
+            self.concat_tour(year, table_dict, "tour 1"),
+            self.concat_tour(year, table_dict, "tour 2"),
         )
-        logger.debug('Reformatting')
+        logger.debug("Reformatting")
         poll_dataset_t1 = self.formate(poll_dataset_t1, year)
         poll_dataset_t2 = self.formate(poll_dataset_t2, year)
 
@@ -490,17 +507,13 @@ class PollFetcher:
 
         # Add metadata
         poll_dataset_t1 = poll_dataset_t1.with_columns(
-            year=pl.lit(year),
-            type=pl.lit('pres'),
-            tour=pl.lit('t1')
+            year=pl.lit(year), type=pl.lit("pres"), tour=pl.lit("t1")
         )
         poll_dataset_t2 = poll_dataset_t2.with_columns(
-            year=pl.lit(year),
-            type=pl.lit('pres'),
-            tour=pl.lit('t2')
+            year=pl.lit(year), type=pl.lit("pres"), tour=pl.lit("t2")
         )
 
-        return {'t1': poll_dataset_t1, 't2': poll_dataset_t2}
+        return {"t1": poll_dataset_t1, "t2": poll_dataset_t2}
 
     def get_events(self, year):
         rows = []
@@ -520,14 +533,12 @@ class PollFetcher:
             # Remove the trailing "(date)"
             event_name = re.sub(r"\s*\(\d{1,2} [^)]+\)\.?", "", event).strip()
 
-            rows.append({
-                "event_name": event_name,
-                "event_date": event_date,
-            })
+            rows.append(
+                {
+                    "event_name": event_name,
+                    "event_date": event_date,
+                }
+            )
 
-        df = (
-            pl.DataFrame(rows)
-            .unique('event_date')
-            .sort("event_date")
-        )
+        df = pl.DataFrame(rows).unique("event_date").sort("event_date")
         return df

@@ -55,14 +55,20 @@ table_selector = {
         "tour 2": {"start": "Chirac - Le Pen", "end": "Chirac - Le Pen"},
     },
     "1995": {
-        "tour 1": {"start": 'Élection présidentielle française de 1995 (2)', "end": 'Élection présidentielle française de 1995 (2)'},
-        "tour 2": {"start": 'Balladur - Jospin', "end": 'Balladur - Jospin'},
+        "tour 1": {
+            "start": "Élection présidentielle française de 1995 (2)",
+            "end": "Élection présidentielle française de 1995 (2)",
+        },
+        "tour 2": {"start": "Balladur - Jospin", "end": "Balladur - Jospin"},
     },
     "1988": {
         "tour 1": {
             "start": "Élection présidentielle française de 1988 (2)",
             "end": "Élection présidentielle française de 1988 (2)",
         },
-        "tour 2": {"start": 'Sondages concernant le premier tour', "end": 'Sondages concernant le premier tour'},
+        "tour 2": {
+            "start": "Sondages concernant le premier tour",
+            "end": "Sondages concernant le premier tour",
+        },
     },
 }

@@ -17,6 +17,7 @@ INSTITUTE_VARIATIONS = sorted(
     reverse=True,
 )
 
+
 def extract_institute_media(title):
     upper = title.upper()
 
@@ -32,7 +33,7 @@ def extract_institute_media(title):
     media = ""
     if matched_variation:
         pos = upper.find(matched_variation)
-        media = title[pos + len(matched_variation):].strip()
+        media = title[pos + len(matched_variation) :].strip()
 
     media = re.sub(
         r"\b\d{1,2}\s*(?:er)?\s*"
@@ -59,7 +60,6 @@ def scrape_year(page, year, base_url):
     soup = BeautifulSoup(page.content(), "html.parser")
 
     for block in soup.select("dl.accordion"):
-
         month_tag = block.select_one("h2.notices-mois-titre")
 
         if not month_tag:
@@ -70,9 +70,9 @@ def scrape_year(page, year, base_url):
         for link in block.select("a.pdf_download"):
             title = link.get_text(" ", strip=True)
 
-            title_parts = title.split(' ')
+            title_parts = title.split(" ")
             sondage_id = title_parts[0]
-            processed_title = '-'.join(title_parts[1:])
+            processed_title = "-".join(title_parts[1:])
             theme = title_parts[1] if len(title_parts) > 2 else ""
             institute, media = extract_institute_media(processed_title)
 
@@ -82,13 +82,13 @@ def scrape_year(page, year, base_url):
             day = potential_day if potential_day.isdigit() else ""
             date_ = (
                 date(year, int(MONTHS[month_.lower()]), int(day))
-                if day != "" and month_ != ''
+                if day != "" and month_ != ""
                 else None
             )
             path = (
                 f"/notices/files/notices/"
                 f"{year}/{month.split()[0].lower().replace('é', 'e')}/"
-                f"{(re.sub(r"-+", "-", title.lower().replace(" ", "-").replace('.pdf', "").replace(',', "").replace(".", "")))}.pdf"
+                f"{(re.sub(r'-+', '-', title.lower().replace(' ', '-').replace('.pdf', '').replace(',', '').replace('.', '')))}.pdf"
             )
 
             rows.append(
@@ -99,24 +99,23 @@ def scrape_year(page, year, base_url):
                     "day": day,
                     "month_": month_,
                     "date": date_,
-
                     "raw_title": title,
-
                     "sondage_id": sondage_id,
                     "theme": theme,
                     "title": processed_title,
                     "institute": institute,
                     "media": media,
-
                     "url": urljoin(base_url, link["href"]),
-                    'url_title': urljoin(base_url, path)
+                    "url_title": urljoin(base_url, path),
                 }
             )
 
     return rows
 
 
-def scrape_notices(start_year=2016, end_year=2026, base_url="https://www.commission-des-sondages.fr"):
+def scrape_notices(
+    start_year=2016, end_year=2026, base_url="https://www.commission-des-sondages.fr"
+):
     rows = []
 
     with sync_playwright() as p:
@@ -133,23 +132,24 @@ def scrape_notices(start_year=2016, end_year=2026, base_url="https://www.commiss
 
 
 if __name__ == "__main__":
-
     # Load config
     config_path = Path("config/cds_extraction_config.json")
 
     with config_path.open("r", encoding="utf-8") as f:
         config = json.load(f)
 
-    df = (
-        pl.DataFrame(scrape_notices(start_year=2016, end_year=2026, base_url=config['base_url']), infer_schema_length=None)
-        .sort(["year", "month", "sondage_id"])
+    df = pl.DataFrame(
+        scrape_notices(start_year=2016, end_year=2026, base_url=config["base_url"]),
+        infer_schema_length=None,
+    ).sort(["year", "month", "sondage_id"])
+    df.write_parquet(
+        config["data_path"] + "commission_des_sondages_notices.parquet",
+        storage_options={
+            "aws_endpoint_url": "https://minio.lab.sspcloud.fr",
+            "aws_region": "us-east-1",
+        },
+        credential_provider=pl.CredentialProviderAWS(
+            profile_name="default",
+            region_name="us-east-1",
+        ),
     )
-    df.write_parquet(config['data_path'] + "commission_des_sondages_notices.parquet",
-            storage_options={
-                "aws_endpoint_url": "https://minio.lab.sspcloud.fr",
-                "aws_region": "us-east-1",
-            },
-            credential_provider=pl.CredentialProviderAWS(
-                profile_name="default",
-                region_name="us-east-1",
-    ))

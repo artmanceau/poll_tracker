@@ -92,7 +92,9 @@ def poll_evolution_plot(
         if trend is not None:
             fig.add_trace(trend)
         fig.add_trace(
-            _poll_points(name, color, item, series, no_sample_size, show_legend=trend is None)
+            _poll_points(
+                name, color, item, series, no_sample_size, show_legend=trend is None
+            )
         )
 
     _add_official_labels(fig, official_scores)
@@ -102,6 +104,7 @@ def poll_evolution_plot(
 
 
 # --- Data extraction ------------------------------------------------------
+
 
 def _label_column(item):
     """Sibling label column for a candidate item, or None for blocs.
@@ -166,14 +169,19 @@ def _extract_series(polls, item, no_sample_size):
         values=sdf.get_column(item).to_numpy(),
         source=sdf.get_column("source").to_list(),
         source_link=sdf.get_column("source_link").to_list(),
-        sample_size=None if no_sample_size else sdf.get_column("sample_size").to_numpy(),
-        label_line=[f"<br>Précision : {v}" if v not in (None, "") else "" for v in labels],
+        sample_size=None
+        if no_sample_size
+        else sdf.get_column("sample_size").to_numpy(),
+        label_line=[
+            f"<br>Précision : {v}" if v not in (None, "") else "" for v in labels
+        ],
         trend_x=agg.get_column("date_num").to_numpy().astype("float64"),
         trend_y=agg.get_column("val").to_numpy(),
     )
 
 
 # --- Traces ---------------------------------------------------------------
+
 
 def _result_line(name, color, group, score, date_span):
     """Dashed horizontal line at the official result, spanning the x-axis."""
@@ -258,6 +266,7 @@ def _point_hovertemplate(name, no_sample_size):
 
 
 # --- Annotations & layout -------------------------------------------------
+
 
 def _add_official_labels(fig, official_scores):
     """Direct-label each result line at the right edge: candidate name + score.

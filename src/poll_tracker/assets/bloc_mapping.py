@@ -64,34 +64,32 @@ blocs = {
 
 BLOC_COLORS = {
     # Level 1
-    "G": "#E53935",      # Red
-    "CG": "#E91E63",    #  Centre-left
-    "C": "#FBC02D",      # Yellow
-    "CD": "#1976D2",     # Blue / Centre-right
-    "D": "#0D47A1",      # Dark blue
-
+    "G": "#E53935",  # Red
+    "CG": "#E91E63",  #  Centre-left
+    "C": "#FBC02D",  # Yellow
+    "CD": "#1976D2",  # Blue / Centre-right
+    "D": "#0D47A1",  # Dark blue
     # Level 2
-    "GCG": "#E91E63",   # Red (Left coalition)
-    "C": "#FBC02D", 
-    "DCD": "#1565C0",    # Medium-dark blue (Right coalition)
-
+    "GCG": "#E91E63",  # Red (Left coalition)
+    # "C": "#FBC02D",
+    "DCD": "#1565C0",  # Medium-dark blue (Right coalition)
     # Level 3
-    "TG":"#E91E63",   # Dark green (Entire left)
-    "TD": "#1976D2",          # Navy (Entire right)
+    "TG": "#E91E63",  # Dark green (Entire left)
+    "TD": "#1976D2",  # Navy (Entire right)
 }
 
 
 BLOC_NAME = {
-    'TD': 'Toutes les forces politiques de droite',
-    'TG': 'Toutes les forces politiques de gauche',
-    'D' : 'Extrême droite',
-    'CD': 'Droite',
-    'C': 'Centre',
-    'CG' : "Gauche",
-    'G': 'Extrême gauche',
-    'GCG' : 'Bloc de gauche',
-    'DCD' : 'Bloc de droite',
-    'C' : 'Bloc centriste'
+    "TD": "Toutes les forces politiques de droite",
+    "TG": "Toutes les forces politiques de gauche",
+    "D": "Extrême droite",
+    "CD": "Droite",
+    "C": "Centre",
+    "CG": "Gauche",
+    "G": "Extrême gauche",
+    "GCG": "Bloc de gauche",
+    "DCD": "Bloc de droite",
+    # "C": "Bloc centriste",
 }
 
 blocs_level_1 = ["G", "CG", "CD", "C", "D"]
@@ -104,5 +102,5 @@ blocs_level_3_str = [BLOC_NAME[bloc] for bloc in blocs_level_3]
 bloc_level_mapping = {
     str(blocs_level_1_str): blocs_level_1,
     str(blocs_level_2_str): blocs_level_2,
-    str(blocs_level_3_str): blocs_level_3
+    str(blocs_level_3_str): blocs_level_3,
 }

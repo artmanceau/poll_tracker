@@ -2,10 +2,7 @@ INSTITUTES = {
     "resultats": {
         "id": 0,
         "name": "Résultats",
-        "variations": [
-            "Résultats",
-            "Résultats officiels"
-        ],
+        "variations": ["Résultats", "Résultats officiels"],
     },
     "harris_interactive": {
         "id": 1,
@@ -16,30 +13,23 @@ INSTITUTES = {
             "Harris Interractive",
             "Louis Harris",
             "Harris-Interactive",
-            "Harris[g]"
+            "Harris[g]",
         ],
     },
     "kantar": {
-        'id': 15,
-        'name': 'Kantar',
+        "id": 15,
+        "name": "Kantar",
         "variations": [
-            'Kantar',
-            'Sofres',
+            "Kantar",
+            "Sofres",
             "TNS Sofres",
             "Kantar Sofres - OnePoint",
-            "Kantar Sofres-OnePoint"
-            "Kantar\xa0Sofres - OnePoint",
-            'Kantar Sofres-OnePoint',
+            "Kantar Sofres-OnePointKantar\xa0Sofres - OnePoint",
+            "Kantar Sofres-OnePoint",
             "Kantar Sofres",
-        ]
+        ],
     },
-    'politico': {
-        'id': 16,
-        'name': 'Politico',
-        'variations': [
-            'Atlas Politico'
-        ]
-    },
+    "politico": {"id": 16, "name": "Politico", "variations": ["Atlas Politico"]},
     "opinionway": {
         "id": 2,
         "name": "OpinionWay",
@@ -51,22 +41,12 @@ INSTITUTES = {
     "cluster17": {
         "id": 3,
         "name": "Cluster 17",
-        "variations": [
-            "CLUSTER17",
-            "CLUSTER 17",
-            "Cluster17[m]"
-        ],
+        "variations": ["CLUSTER17", "CLUSTER 17", "Cluster17[m]"],
     },
     "ifop": {
         "id": 4,
         "name": "IFOP",
-        "variations": [
-            "IFOP",
-            "Ifop[2]",
-            "Ifop[3]",
-            "Ifop-Fiducial",
-            "Ifop[f]"
-        ],
+        "variations": ["IFOP", "Ifop[2]", "Ifop[3]", "Ifop-Fiducial", "Ifop[f]"],
     },
     "elabe": {
         "id": 5,
@@ -85,9 +65,9 @@ INSTITUTES = {
             "Cevipof Ipsos Sopra Steria",
             "Cevipof Ipsos Sopra Steria",
             "Ipsos Sopra Steria",
-            '«\xa0Ipsos\xa0»(Archive.org • Wikiwix • Google • Que faire\xa0?)',
+            "«\xa0Ipsos\xa0»(Archive.org • Wikiwix • Google • Que faire\xa0?)",
             "Ipsos\xa0Sopra\xa0Steria",
-            "Cevipof Ipsos-Sopra Steria"
+            "Cevipof Ipsos-Sopra Steria",
         ],
     },
     "bva": {
@@ -148,33 +128,33 @@ INSTITUTES = {
         ],
     },
     "lh2": {
-        'id':18,
-        'name': 'LH2',
-        'variations': [
-            'LH2',
-        ]
+        "id": 18,
+        "name": "LH2",
+        "variations": [
+            "LH2",
+        ],
     },
     "scan_research": {
-        'id':19,
-        'name': 'Scan Research',
-        'variations': [
-            'Scan Research - Le Terrain',
-        ]
+        "id": 19,
+        "name": "Scan Research",
+        "variations": [
+            "Scan Research - Le Terrain",
+        ],
     },
     "dedicated_research": {
-        'id':19,
-        'name': 'Dedicated Research',
-        'variations': [
-            'Dedicated Research',
-        ]
+        "id": 19,
+        "name": "Dedicated Research",
+        "variations": [
+            "Dedicated Research",
+        ],
     },
-     "future_thinking": {
-        'id':20,
-        'name': 'Future Thinking',
-        'variations': [
-            'Future Thinking - SSI',
-        ]
-    }
+    "future_thinking": {
+        "id": 20,
+        "name": "Future Thinking",
+        "variations": [
+            "Future Thinking - SSI",
+        ],
+    },
 }
 
 INSTITUTE_LOOKUP = {
