@@ -297,17 +297,19 @@ def _add_events(fig, events):
             continue
         x = str(getattr(date, "isoformat", lambda: date)())
         fig.add_vline(x=x, line=dict(color=NEUTRAL, width=1, dash="dot"))
+        short = name[:20] + "…" if len(name) > 30 else name
+
         fig.add_annotation(
             x=x,
-            xref="x",
             y=1,
-            yref="paper",
             yanchor="bottom",
-            text=name,
-            showarrow=False,
+            yref="paper",
+            text=short,
             textangle=-90,
-            font=dict(size=10, color="#6a6a6a"),
+            showarrow=False,
             xshift=-6,
+            font=dict(size=10, color="#6a6a6a"),
+            hovertext=name,
         )
 
 

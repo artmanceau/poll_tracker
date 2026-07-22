@@ -3,13 +3,8 @@
 Layout: a top row of dataset selectors (year / election / round), then two
 columns — filters on the left, the plotly chart on the right.
 """
-
-import faulthandler
-from pathlib import Path
-
 import polars as pl
 import streamlit as st
-
 from plots import poll_evolution_plot
 from poll_tracker.assets.candidates import (
     candidates,
@@ -17,18 +12,22 @@ from poll_tracker.assets.candidates import (
     second_round,
 )
 from poll_tracker.assets.bloc_mapping import (
-    blocs_level_1,
-    blocs_level_2,
-    blocs_level_3,
+    blocs_level_1_str,
+    blocs_level_2_str,
+    blocs_level_3_str,
+    bloc_level_mapping
 )
 
-faulthandler.enable()
 
 # --- Configuration --------------------------------------------------------
 
 POLL_URI = "s3://arthurmanceau/poll_tracker/wiki/{election}/{year}/{tour}/polls.parquet"
-STORAGE_OPTIONS = {"profile": "default"}
-EVENTS_CSV = Path(__file__).resolve().parents[1] / "config" / "events.csv"
+STORAGE_OPTIONS = {
+    "aws_skip_signature": "true",
+    "aws_region": "us-east-1",
+    "aws_endpoint_url": "https://minio.lab.sspcloud.fr",
+}
+EVENTS_URI = "s3://arthurmanceau/poll_tracker/wiki/{election}/{year}/events.parquet"
 
 RESULT_SOURCE = "Résultats"  # the source value marking the official result row
 
@@ -52,33 +51,38 @@ MIN_SCORE_PCT = 5  # threshold for the "remove candidates below 5%" filter
 @st.cache_data
 def load_poll_data(year, election, tour):
     uri = POLL_URI.format(election=election, year=year, tour=tour)
-    return pl.read_parquet(uri, storage_options=STORAGE_OPTIONS)
+    return pl.read_parquet(
+        uri, storage_options=STORAGE_OPTIONS
+    )
 
 
 @st.cache_data
-def load_events(year):
-    """Events for `year` as a polars DataFrame[event_name, event_date].
+def load_events(election: str, year: int, date_range) -> pl.DataFrame:
+    """Events for an election/year as a Polars DataFrame[event_name, event_date]."""
 
-    Read from a local CSV (columns: year, event_name, event_date). A missing
-    file, an empty file, or no rows for the year all yield an empty frame.
+    start_date, end_date = date_range
 
-    Read with polars (not pandas): pandas 3.0's pyarrow-backed string arrays can
-    segfault under Streamlit's concurrent script threads.
-    """
-    empty = pl.DataFrame(schema={"event_name": pl.String, "event_date": pl.Date})
-    if not EVENTS_CSV.exists():
-        return empty
+    empty = pl.DataFrame(
+        schema={
+            "event_name": pl.String,
+            "event_date": pl.Date,
+        }
+    )
 
-    try:
-        df = pl.read_csv(EVENTS_CSV, schema_overrides={"year": pl.String})
-    except pl.exceptions.NoDataError:  # 0-byte / header-less file
-        return empty
-    if df.height == 0 or not {"year", "event_name", "event_date"}.issubset(df.columns):
+    df = pl.read_parquet(
+            EVENTS_URI.format(election=election, year=year),
+            storage_options=STORAGE_OPTIONS
+    )
+
+    if df.height == 0:
         return empty
 
     return (
-        df.with_columns(pl.col("event_date").str.to_date(strict=False))
-        .filter((pl.col("year") == str(year)) & pl.col("event_date").is_not_null())
+        df.with_columns(
+            pl.col("event_date").str.to_date()
+        ).filter(
+            (pl.col('event_date') > start_date) & (pl.col('event_date')<end_date)
+        )
         .select("event_name", "event_date")
     )
 
@@ -150,8 +154,8 @@ def select_mode(tour):
 def select_items(mode, tour, year, polls, official):
     """The candidate/bloc columns to plot, per the chosen mode and round."""
     if mode == MODE_BLOCS:
-        blocs = st.radio("Division", options=[blocs_level_1, blocs_level_2, blocs_level_3])
-        return [f"BP_{b}" for b in blocs]
+        blocs = st.radio("Division", options=[blocs_level_1_str, blocs_level_2_str, blocs_level_3_str])
+        return [f"BP_{b}" for b in bloc_level_mapping[str(blocs)]]
     if tour == "Second tour":
         return _candidate_columns(_known_candidates(second_round, year))
     if official.height == 0:
@@ -253,7 +257,7 @@ def main():
             items=items,
             mode=mode,
             no_sample_size=no_sample_size,
-            events=load_events(year),
+            events=load_events(ELECTIONS[election], year, date_range),
         )
         event = st.plotly_chart(
             fig,

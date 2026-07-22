@@ -414,7 +414,7 @@ class PollFetcher:
     def parse_c_col(col_expr: pl.Expr) -> pl.Expr:
         return pl.struct(
             raw=col_expr,
-            processed=col_expr.str.replace(r"^<\s*", "", literal=False).str.replace('-', '').str.replace(",", ".", literal=True).str.extract(r"(\d+\.?\d*)", group_index=1).cast(pl.Float64, strict=False).fill_null(0.0),
+            processed=col_expr.str.replace(r"^<\s*", "", literal=False).str.replace('-', '').str.replace(",", ".", literal=True).str.extract(r"(\d+\.?\d*)", group_index=1).cast(pl.Float64, strict=False),
             label=col_expr.str.extract(r"^[<>~\s]*[\d.,]+\s*%?\s*(\p{L}.*)$", group_index=1).str.strip_chars(),
             sign=col_expr.str.contains(r"^<", literal=False),
         )
@@ -502,16 +502,32 @@ class PollFetcher:
 
         return {'t1': poll_dataset_t1, 't2': poll_dataset_t2}
 
-    def save_s3(self, data_path, datasets, year):
-        election_type = "presidentiel"
-        logger.debug("Saving to S3")
-        for tour in ['t1', 't2']:
-            datasets[tour].write_parquet(data_path + f"{election_type}/{year}/{tour}/polls.parquet",
-            storage_options={
-                "aws_endpoint_url": "https://minio.lab.sspcloud.fr",
-                "aws_region": "us-east-1",
-            },
-            credential_provider=pl.CredentialProviderAWS(
-                profile_name="default",
-                region_name="us-east-1",
-            ))
+    def get_events(self, year):
+        rows = []
+        for event in self.events:
+            m = re.search(r"\((\d{1,2}) ([a-zéûîôà]+) (\d{4})\)", event.lower())
+            if not m:
+                continue
+
+            day, month, year_ = m.groups()
+            month = MONTHS.get(month)
+
+            if month is None:
+                continue
+
+            event_date = f"{year_}-{month}-{int(day):02d}"
+
+            # Remove the trailing "(date)"
+            event_name = re.sub(r"\s*\(\d{1,2} [^)]+\)\.?", "", event).strip()
+
+            rows.append({
+                "event_name": event_name,
+                "event_date": event_date,
+            })
+
+        df = (
+            pl.DataFrame(rows)
+            .unique('event_date')
+            .sort("event_date")
+        )
+        return df

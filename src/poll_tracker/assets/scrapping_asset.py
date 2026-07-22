@@ -14,7 +14,7 @@ links = {
 table_selector = {
     "2027": {
         "tour 1": {
-            "start": "Année 2025",
+            "start": "Second semestre 2026",
             "end": "Année 2023",
         },
         "tour 2": {

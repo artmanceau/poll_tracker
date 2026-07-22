@@ -80,9 +80,6 @@ BLOC_COLORS = {
     "TD": "#1976D2",          # Navy (Entire right)
 }
 
-blocs_level_1 = ["G", "CG", "CD", "C", "D"]
-blocs_level_2 = ["GCG", "DCD", "C"]
-blocs_level_3 = ["TG", "TD"]
 
 BLOC_NAME = {
     'TD': 'Toutes les forces politiques de droite',
@@ -95,4 +92,17 @@ BLOC_NAME = {
     'GCG' : 'Bloc de gauche',
     'DCD' : 'Bloc de droite',
     'C' : 'Bloc centriste'
+}
+
+blocs_level_1 = ["G", "CG", "CD", "C", "D"]
+blocs_level_1_str = [BLOC_NAME[bloc] for bloc in blocs_level_1]
+blocs_level_2 = ["GCG", "DCD", "C"]
+blocs_level_2_str = [BLOC_NAME[bloc] for bloc in blocs_level_2]
+blocs_level_3 = ["TG", "TD"]
+blocs_level_3_str = [BLOC_NAME[bloc] for bloc in blocs_level_3]
+
+bloc_level_mapping = {
+    str(blocs_level_1_str): blocs_level_1,
+    str(blocs_level_2_str): blocs_level_2,
+    str(blocs_level_3_str): blocs_level_3
 }

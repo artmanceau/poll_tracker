@@ -394,6 +394,7 @@ candidates = {
         "color": "#FED92D",  # Socialist pink
         "aliases": [
             'Glucksmann (PP)',
+            'Glucksmann[c] (PP)[c]'
         ]
     },
     "jadot": {
@@ -426,6 +427,7 @@ candidates = {
         "color": "#FBC02D",  # Yellow
         "aliases": [
             'Attal (RE)',
+            'Attal[c] (RE)'
         ]
     },
     "philippe": {
@@ -554,7 +556,8 @@ candidates = {
         "aliases": [
             "Hollande",
             "François Hollande (PS)",
-            "François Hollande"
+            "François Hollande",
+            "Hollande (PS)"
         ]
     },
     "sarkozy": {
@@ -885,15 +888,21 @@ candidates = {
 election_candidates = {
     "2027": [
         "candidat_ps_pp",
+        'glucksmann',
+        'faure',
+        'retailleau',
         'poutou',
         "melenchon",
         "tondelier",
         "faure",
+        'attal',
+        'philippe',
         "candidat_ens",
         "lr_candidate",
         "dupont_aignan",
         "rn_candidate",
         "zemmour",
+        'm_le_pen',
         "villepin",
         "wauquiez",
         "arthaud",
