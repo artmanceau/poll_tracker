@@ -44,11 +44,6 @@ MODE_CANDIDATES = "Candidats"
 MODE_BLOCS = "Blocs politiques"
 MIN_SCORE_PCT = 5  # threshold for the "remove candidates below 5%" filter
 
-# TODO
-# Multiple second tour hyp
-# Resultats 1995, 1988
-# Previous election
-
 # --- Data loading ---------------------------------------------------------
 
 

@@ -1,6 +1,7 @@
 from poll_tracker.core.poll_fetcher import PollFetcher
 from pathlib import Path
 import json
+import os
 from poll_tracker.utils.utils import clean_env_var
 
 if __name__ == "__main__":
@@ -20,23 +21,22 @@ if __name__ == "__main__":
 
         clean_env_var()
 
+        storage_options = {
+            "aws_access_key_id": os.environ["AWS_ACCESS_KEY_ID"],
+            "aws_secret_access_key": os.environ["AWS_SECRET_ACCESS_KEY"],
+            "aws_endpoint_url": os.environ.get(
+                "AWS_ENDPOINT_URL", "https://minio.lab.sspcloud.fr"
+            ),
+            "aws_region": os.environ.get("AWS_DEFAULT_REGION", "us-east-1"),
+        }
+
         for tour in ["t1", "t2"]:
             datasets[tour].write_parquet(
                 config["data_path"] + f"{election_type}/{year}/{tour}/polls.parquet",
-                storage_options={
-                    "aws_access_key_id": "sa-project-pt-2",
-                    "aws_secret_access_key": "+4ImZb7cBMSOdKBrE6kj0g==",
-                    "aws_endpoint_url": "https://minio.lab.sspcloud.fr",
-                    "aws_region": "us-east-1",
-                },
+                storage_options=storage_options,
             )
 
         events.write_parquet(
             config["data_path"] + f"{election_type}/{year}/events.parquet",
-            storage_options={
-                "aws_access_key_id": "sa-project-pt-2",
-                "aws_secret_access_key": "+4ImZb7cBMSOdKBrE6kj0g==",
-                "aws_endpoint_url": "https://minio.lab.sspcloud.fr",
-                "aws_region": "us-east-1",
-            },
+            storage_options=storage_options,
         )
