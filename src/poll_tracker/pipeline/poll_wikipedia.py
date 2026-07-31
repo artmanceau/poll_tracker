@@ -1,7 +1,7 @@
 from poll_tracker.core.poll_fetcher import PollFetcher
 from pathlib import Path
 import json
-import polars as pl
+from poll_tracker.utils.utils import clean_env_var
 
 if __name__ == "__main__":
     # Load class
@@ -18,27 +18,25 @@ if __name__ == "__main__":
 
         election_type = "presidentiel"
 
+        clean_env_var()
+
         for tour in ["t1", "t2"]:
             datasets[tour].write_parquet(
                 config["data_path"] + f"{election_type}/{year}/{tour}/polls.parquet",
                 storage_options={
+                    "aws_access_key_id": "sa-project-pt-2",
+                    "aws_secret_access_key": "+4ImZb7cBMSOdKBrE6kj0g==",
                     "aws_endpoint_url": "https://minio.lab.sspcloud.fr",
                     "aws_region": "us-east-1",
                 },
-                credential_provider=pl.CredentialProviderAWS(
-                    profile_name="default",
-                    region_name="us-east-1",
-                ),
             )
 
         events.write_parquet(
             config["data_path"] + f"{election_type}/{year}/events.parquet",
             storage_options={
+                "aws_access_key_id": "sa-project-pt-2",
+                "aws_secret_access_key": "+4ImZb7cBMSOdKBrE6kj0g==",
                 "aws_endpoint_url": "https://minio.lab.sspcloud.fr",
                 "aws_region": "us-east-1",
             },
-            credential_provider=pl.CredentialProviderAWS(
-                profile_name="default",
-                region_name="us-east-1",
-            ),
         )

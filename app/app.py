@@ -4,6 +4,7 @@ Layout: a top row of dataset selectors (year / election / round), then two
 columns — filters on the left, the plotly chart on the right.
 """
 
+from poll_tracker.utils.utils import clean_env_var
 import polars as pl
 import streamlit as st
 from plots import poll_evolution_plot
@@ -20,11 +21,14 @@ from poll_tracker.assets.bloc_mapping import (
 )
 
 
+clean_env_var()
+
 # --- Configuration --------------------------------------------------------
 
 POLL_URI = "s3://arthurmanceau/poll_tracker/wiki/{election}/{year}/{tour}/polls.parquet"
 STORAGE_OPTIONS = {
-    "aws_skip_signature": "true",
+    "aws_access_key_id": st.secrets["AWS_ACCESS_KEY_ID"],
+    "aws_secret_access_key": st.secrets["AWS_SECRET_ACCESS_KEY"],
     "aws_region": "us-east-1",
     "aws_endpoint_url": "https://minio.lab.sspcloud.fr",
 }
@@ -32,7 +36,7 @@ EVENTS_URI = "s3://arthurmanceau/poll_tracker/wiki/{election}/{year}/events.parq
 
 RESULT_SOURCE = "Résultats"  # the source value marking the official result row
 
-YEARS = ["2027", "2022", "2017", "2012", "2007", "2002", "1995", "1988"]
+YEARS = ["2022", "2027", "2017", "2012", "2007", "2002", "1995", "1988"]
 ELECTIONS = {"Élections présidentielles": "presidentiel"}
 TOURS = {"Premier tour": "t1", "Second tour": "t2"}
 
@@ -44,8 +48,6 @@ MIN_SCORE_PCT = 5  # threshold for the "remove candidates below 5%" filter
 # Multiple second tour hyp
 # Resultats 1995, 1988
 # Previous election
-# + deploy
-
 
 # --- Data loading ---------------------------------------------------------
 

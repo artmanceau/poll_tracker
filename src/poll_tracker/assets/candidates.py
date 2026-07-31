@@ -82,7 +82,8 @@ candidates = {
         "aliases": [
             "Nicolas Sarkozy",
             "Sarkozy",
-            "Nicolas Sarkozy (LR)Nicolas Sarkozy (UMP)",
+            "Nicolas Sarkozy (LR)",
+            "Nicolas Sarkozy (UMP)",
         ],
     },
     "cope": {
@@ -185,11 +186,7 @@ candidates = {
     "hուլot": {
         "name": "Nicolas Hulot",
         "color": "#32CD32",  # Light green
-        "aliases": [
-            "Nicolas Hulot",
-            "Nicolas Hulo",
-            "Hulot",
-        ],
+        "aliases": ["Nicolas Hulot", "Nicolas Hulo", "Hulot", "Nicolas Hulot (SE)"],
     },
     "poutou": {
         "name": "Philippe Poutou",
