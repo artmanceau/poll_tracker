@@ -1,6 +1,6 @@
 blocs = {
     "2027": {
-        "G": ["arthaud", "poutou", "melenchon", "roussel"],
+        "G": ["arthaud", "melenchon", "roussel"],
         "CG": [
             "tondelier",
             "candidat_ps_pp",

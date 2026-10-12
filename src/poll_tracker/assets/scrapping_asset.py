@@ -14,11 +14,11 @@ links = {
 table_selector = {
     "2027": {
         "tour 1": {
-            "start": "Second semestre 2026",
+            "start": "Octobre-décembre 2026",
             "end": "Année 2023",
         },
         "tour 2": {
-            "start": "Hypothèse Attal – Bardella",
+            "start": "Hypothèse Mélenchon – Le Pen",
             "end": None,
         },
     },
