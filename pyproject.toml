@@ -7,7 +7,7 @@ name = "poll-tracker"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.13, <3.15"
 dependencies = [
     "boto3>=1.43.0",
     "bs4>=0.0.2",
